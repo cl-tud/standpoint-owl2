@@ -1,0 +1,30 @@
+<assembly
+    xmlns="http://maven.apache.org/ASSEMBLY/2.1.1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.1 https://maven.apache.org/xsd/assembly-2.1.1.xsd">
+    <id>protege-assembly</id>
+    <formats>
+        <format>jar</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+	<fileSets>
+        <fileSet>
+            <outputDirectory></outputDirectory>
+            <directory>${project.build.outputDirectory}</directory>
+        </fileSet>
+    </fileSets>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory></outputDirectory>
+			<excludes>
+                <!-- <exclude>gnu.getopt:java-getopt</exclude> -->
+                <exclude>net.sourceforge.owlapi:owlapi-distribution</exclude>
+            </excludes>
+			<unpack>true</unpack>
+			<scope>runtime</scope>
+            <useProjectArtifact>false</useProjectArtifact>
+            <!-- Exclude the transitive dependencies of the OWL API. -->
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+        </dependencySet>
+    </dependencySets>
+</assembly>

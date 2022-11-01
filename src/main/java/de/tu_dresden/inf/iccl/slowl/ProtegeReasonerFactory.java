@@ -11,12 +11,12 @@ public class ProtegeReasonerFactory extends AbstractProtegeOWLReasonerInfo {
 	protected final ReasonerFactory factory = new ReasonerFactory();
 	
 	public BufferingMode getRecommendedBuffering() {
-        return BufferingMode.BUFFERING;
-    }
+		return BufferingMode.BUFFERING;
+	}
 	
-    public OWLReasonerFactory getReasonerFactory() {
-        return factory;
-    }
+	public OWLReasonerFactory getReasonerFactory() {
+		return factory;
+	}
 	
 	public OWLReasonerConfiguration getConfiguration(ReasonerProgressMonitor monitor) {
 		return new SimpleConfiguration(monitor);

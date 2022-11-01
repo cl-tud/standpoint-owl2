@@ -2,8 +2,8 @@
 <?eclipse version="3.0"?>
 
 <plugin>
-   <extension id="slowl.reasoner.factory" point="org.protege.editor.owl.inference_reasonerfactory">
-        <name value="SLOWL"/>
-        <class value="de.tu_dresden.inf.iccl.slowl.ProtegeReasonerFactory"/>
-    </extension>
+	<extension id="slowl.reasoner.factory" point="org.protege.editor.owl.inference_reasonerfactory">
+		<name value="SLOWL"/>
+		<class value="de.tu_dresden.inf.iccl.slowl.ProtegeReasonerFactory"/>
+	</extension>
 </plugin>

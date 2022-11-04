@@ -88,6 +88,7 @@
 						<Include-Resource>plugin.xml, {maven-resources}</Include-Resource>
 						<!-- <Private-Package>skeleton</Private-Package> -->
 					</instructions>
+					<buildDirectory>${env.PROTEGE_HOME}/plugins</buildDirectory>
 					<executions>
 						<execution>
 							<id>bundle-manifest</id>

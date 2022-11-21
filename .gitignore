@@ -5,3 +5,4 @@ build.properties
 META-INF/
 target/
 
+hs.build.sh

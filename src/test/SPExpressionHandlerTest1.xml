@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<standpointAxiom operator="box">
+  <UNION>
+    <Standpoint name="s1"/>
+	<Standpoint name="s2"/>
+  </UNION>
+</standpointAxiom>

@@ -13,8 +13,11 @@ import org.xml.sax.InputSource;
 import org.w3c.dom.Document;
 
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLLiteral;
 
 public class SPParser {
+	
 	/**
 	 * @return Returns the HashSet of standpoint names recorded by the handler
 	 * when parsing a standpoint expression.
@@ -33,12 +36,9 @@ public class SPParser {
 		}
 	}
 	
-	public static Document spLabelToXML(IRI spLabel) {
-		
-		// TO DO: conversion of annotation property to XML string //
-		String spLabelString = "<?version=\"1.0\"?>\n" + spLabel.toString();
-		System.out.println(spLabelString); // ?
-		// END TO DO //
+	public static Document spLabelToXML(OWLAnnotation spLabel) {
+		String spLabelString = "<?xml version=\"1.0\"?>\n" + spLabel.getValue().asLiteral().get().getLiteral().toString();
+		System.out.println(spLabelString);
 		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = null;

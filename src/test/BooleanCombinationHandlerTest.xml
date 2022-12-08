@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<booleanCombination>
+  <AND>
+    <NOT>
+      <standpointAxiom operator="box">
+	    <Standpoint name="s1"/>
+	  </standpointAxiom>
+	  <SubClassOf>
+	    <LHS>C and D</LHS>
+		<RHS>not A</RHS>
+	  </SubClassOf>
+    </NOT>
+    <OR>
+      <EquivalentClasses>
+	    <LHS>C and (not D)</LHS>
+		<RHS>A</RHS>
+	  </EquivalentClasses>
+	  <standpointAxiom operator="diamond">
+	    <Standpoint name="*"/>
+	  </standpointAxiom>
+	  <EquivalentClasses>
+	    <LHS>C and (not D)</LHS>
+		<RHS>B</RHS>
+	  </EquivalentClasses>
+	  <standpointAxiom name="§ax1"/>
+    </OR>
+  </AND>
+</booleanCombination>

@@ -1,6 +1,7 @@
 package de.tu_dresden.inf.iccl.slowl;
 
 import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,14 +15,16 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class SPExpressionHandler extends DefaultHandler {
 	
-	HashSet<String> spNames = new HashSet<String>();
+	Set<String> spNames = new HashSet<String>();
+	String spAxiomName = null;
 	
-	boolean bSP = false;
-	boolean bUnion = false;
-	boolean bIntersection = false;
-	boolean bMinus = false;
+	private boolean bSP = false;
+	private boolean bUnion = false;
+	private boolean bIntersection = false;
+	private boolean bMinus = false;
 	
-	Pattern sp = Pattern.compile("[a-zA-Z]+\\d*");
+	private Pattern sp = Pattern.compile("[a-zA-Z]+\\d*");
+	private Pattern ax = Pattern.compile("§[a-zA-z]+\\d*");
 	
 	protected boolean isSPName(String s) {
 		if (s.equals("*")) {
@@ -32,14 +35,29 @@ public class SPExpressionHandler extends DefaultHandler {
 		}
 	}
 	
+	protected boolean isSPAxiomName(String s) {
+		Matcher m = ax.matcher(s);
+		return m.matches();
+	}
+	
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		
-		if (qName.equalsIgnoreCase("Standpoint")) {
+		if (qName.equalsIgnoreCase("standpointAxiom")) {
+			spAxiomName = attributes.getValue("name");
+			String op = attributes.getValue("operator");
+			if (op.equals("box") || op.equals("diamond")) {
+				
+			} else if (op == null) {
+				throw new SAXException("Missing operator attribute in <standpointAxiom>.");
+			} else {
+				throw new SAXException("Unknown operator used: " + op);
+			}
+		} else if (qName.equalsIgnoreCase("Standpoint")) {
 			bSP = true;
 			String spName = attributes.getValue("name");
 			if (isSPName(spName)) {
-				System.out.println("Valid standpoint name "+spName+" encountered.");
+				//System.out.println("Valid standpoint name "+spName+" encountered.");
 				spNames.add(spName);
 			} else {
 				throw new IllegalArgumentException("Encountered an invalid standpoint name.");
@@ -59,15 +77,8 @@ public class SPExpressionHandler extends DefaultHandler {
 		
 		if (qName.equalsIgnoreCase("standpointAxiom")) {
 			
-			System.out.print("Standpoint names: <[");
-			int k = 1;
-			for (String i : spNames) { 
-				System.out.print(i);
-				if (k++ < spNames.size()) {
-					System.out.print(", ");
-				}
-			}
-			System.out.println("]>");
+			System.out.print(this + " >> Standpoint names: ");
+			SPParser.printSet(spNames);
 		} else if (bSP) {
 			
 			bSP = false;

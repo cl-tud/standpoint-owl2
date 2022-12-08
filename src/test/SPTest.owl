@@ -41,7 +41,9 @@
 
     <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#A -->
 
-    <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#A"/>
+    <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#A">
+        <owl:disjointWith rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X"/>
+    </owl:Class>
     
 
 
@@ -58,6 +60,104 @@
   &lt;Standpoint name=&quot;s1&quot;/&gt;
 &lt;/standpointAxiom&gt;</standpointLabel>
     </owl:Axiom>
+    
+
+
+    <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#C -->
+
+    <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#C">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#A"/>
+                    <rdf:Description rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#B"/>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#C"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/2002/07/owl#equivalentClass"/>
+        <owl:annotatedTarget>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#A"/>
+                    <rdf:Description rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#B"/>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:annotatedTarget>
+        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;standpointAxiom operator=&quot;box&quot;&gt;
+  &lt;Standpoint name=&quot;*&quot;/&gt;
+&lt;/standpointAxiom&gt;</standpointLabel>
+    </owl:Axiom>
+    
+
+
+    <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X -->
+
+    <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X">
+        <owl:disjointUnionOf rdf:parseType="Collection">
+            <rdf:Description rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Y"/>
+            <rdf:Description rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Z"/>
+        </owl:disjointUnionOf>
+    </owl:Class>
+    
+
+
+    <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Y -->
+
+    <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Y">
+        <rdfs:subClassOf rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Z -->
+
+    <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Z">
+        <rdfs:subClassOf rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X"/>
+    </owl:Class>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Z"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#subClassOf"/>
+        <owl:annotatedTarget rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X"/>
+        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;standpointAxiom operator=&quot;diamond&quot;&gt;
+  &lt;MINUS&gt;
+    &lt;Standpoint name=&quot;*&quot;/&gt;
+    &lt;UNION&gt;
+      &lt;Standpoint name=&quot;s1&quot;/&gt;
+      &lt;Standpoint name=&quot;s2&quot;/&gt;
+    &lt;/UNION&gt;
+  &lt;/MINUS&gt;
+&lt;/standpointAxiom&gt;</standpointLabel>
+    </owl:Axiom>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotations
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <rdf:Description rdf:about="http://www.w3.org/2002/07/owl#Thing">
+        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;booleanCombination&gt;
+  &lt;AND&gt;
+    &lt;NOT&gt;
+      &lt;standpointAxiom operator=&quot;box&quot;&gt;
+        &lt;Standpoint name=&quot;s1&quot;&gt;
+      &lt;/standpointAxiom&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;C and D&lt;/LHS&gt;
+        &lt;RHS&gt;X&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/NOT&gt;
+    &lt;standpointAxiom name=&quot;§ax1&quot;/&gt;
+  &lt;/AND&gt;
+&lt;/booleanCombination&gt;</standpointLabel>
+    </rdf:Description>
 </rdf:RDF>
 
 

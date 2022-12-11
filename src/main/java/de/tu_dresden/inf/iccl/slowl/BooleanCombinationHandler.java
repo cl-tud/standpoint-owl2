@@ -8,7 +8,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-// * should use SPExpressionHandler and the OWLAPI parser for complex concepts (somehow)
+// * should use SPOperatorHandler and the OWLAPI parser for complex concepts (somehow)
 
 // * we do not allow nested standpoint operators
 // * named standpointAxioms must be defined outside of the boolean combination
@@ -72,7 +72,11 @@ public class BooleanCombinationHandler extends DefaultHandler {
 			String spAxiomName = attributes.getValue("name");
 			if (spAxiomName != null) {
 				// need to check if there really is a standpoint axiom with that name
+				// TO DO //
 			}
+		} else if (qName.equalsIgnoreCase("Box") || qName.equalsIgnoreCase("Diamond")) {
+			// use SPOperatorHandler
+			// TO DO //
 		}
 		
 	}

@@ -2,26 +2,26 @@
 <booleanCombination>
   <AND>
     <NOT>
-      <standpointAxiom operator="box">
+      <Box>
 	    <Standpoint name="s1"/>
-	  </standpointAxiom>
-	  <SubClassOf>
-	    <LHS>C and D</LHS>
-		<RHS>not A</RHS>
-	  </SubClassOf>
+		<SubClassOf>
+			<LHS>C and D</LHS>
+			<RHS>not A</RHS>
+		</SubClassOf>
+	  </Box>
     </NOT>
     <OR>
       <EquivalentClasses>
 	    <LHS>C and (not D)</LHS>
 		<RHS>A</RHS>
 	  </EquivalentClasses>
-	  <standpointAxiom operator="diamond">
+	  <Diamond>
 	    <Standpoint name="*"/>
-	  </standpointAxiom>
-	  <EquivalentClasses>
-	    <LHS>C and (not D)</LHS>
-		<RHS>B</RHS>
-	  </EquivalentClasses>
+		<EquivalentClasses>
+			<LHS>C and (not D)</LHS>
+			<RHS>B</RHS>
+		</EquivalentClasses>
+	  </Diamond>
 	  <standpointAxiom name="§ax1"/>
     </OR>
   </AND>

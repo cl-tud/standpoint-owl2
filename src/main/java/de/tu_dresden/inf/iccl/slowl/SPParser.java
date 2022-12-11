@@ -44,23 +44,23 @@ public class SPParser {
 	 * Adds recorded standpoint names and standpoint axiom names to
 	 * spNames and spAxiomNames, respectively.
 	 */
-	public void parseSPExpression(String spExpression) {
+	public void parseSPOperator(String spOperator) {
 		try {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			SAXParser saxParser = factory.newSAXParser();
 			XMLReader xmlReader = saxParser.getXMLReader();
-			SPExpressionHandler spExpressionHandler = new SPExpressionHandler();
-			xmlReader.setContentHandler(spExpressionHandler);
-			xmlReader.parse(new InputSource(new StringReader(spExpression)));
+			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
+			xmlReader.setContentHandler(spOperatorHandler);
+			xmlReader.parse(new InputSource(new StringReader(spOperator)));
 			
-			Set<String> names = spExpressionHandler.spNames;
+			Set<String> names = spOperatorHandler.spNames;
 			names.remove("*");
 			Iterator<String> it = names.iterator();
 			it.forEachRemaining(next -> spNames.add(next));
 			System.out.print(this + " >> Standpoint names: ");
 			printSet(spNames);
 			
-			String axiomName = spExpressionHandler.spAxiomName;
+			String axiomName = spOperatorHandler.spAxiomName;
 			if (axiomName != null) {
 				spAxiomNames.add(axiomName);
 			}
@@ -121,11 +121,11 @@ public class SPParser {
 		} else if (axiomType == AxiomType.EQUIVALENT_CLASSES) {
 			for (OWLEquivalentClassesAxiom ax : ontology.getAxioms(AxiomType.EQUIVALENT_CLASSES)) {
 				Set<OWLAnnotation> annotations = ax.getAnnotations(label);
+				// maybe change following to short form
 				Iterator<OWLAnnotation> it = annotations.iterator();
 				try {
 					next = it.next();
 				} catch (NoSuchElementException e) {
-					//e.printStackTrace();
 					continue;
 				}
 				if (next != null) {

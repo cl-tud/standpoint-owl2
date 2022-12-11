@@ -13,10 +13,22 @@ import org.xml.sax.helpers.DefaultHandler;
  * of elements in XML file.
  * (Only stores appearing standpoint names until now.)
  */
-public class SPExpressionHandler extends DefaultHandler {
+public class SPOperatorHandler extends DefaultHandler {
 	
 	Set<String> spNames = new HashSet<String>();
 	String spAxiomName = null;
+	
+	/* Integer value representing modal operator.
+	 * -1 - error
+	 *  0 - box
+	 *  1 - diamond
+	 */ 
+	Integer operator = -1;
+	
+	/* Counter for number of <Box> and <Diamond> elements used.
+	 * Should be exactly 1 at the end of the expression.
+	 */
+	Integer opCount = 0;
 	
 	private boolean bSP = false;
 	private boolean bUnion = false;
@@ -45,19 +57,21 @@ public class SPExpressionHandler extends DefaultHandler {
 		
 		if (qName.equalsIgnoreCase("standpointAxiom")) {
 			spAxiomName = attributes.getValue("name");
-			String op = attributes.getValue("operator");
-			if (op.equals("box") || op.equals("diamond")) {
-				
-			} else if (op == null) {
-				throw new SAXException("Missing operator attribute in <standpointAxiom>.");
-			} else {
-				throw new SAXException("Unknown operator used: " + op);
+			if (spAxiomName != null) {
+				if (!isSPAxiomName(spAxiomName)) {
+					spAxiomName = null;
+				}
 			}
+		} else if (qName.equalsIgnoreCase("Box")) {
+			operator = 0;
+			opCount++;
+		} else if (qName.equalsIgnoreCase("Diamond")) {
+			operator = 1;
+			opCount++;
 		} else if (qName.equalsIgnoreCase("Standpoint")) {
 			bSP = true;
 			String spName = attributes.getValue("name");
 			if (isSPName(spName)) {
-				//System.out.println("Valid standpoint name "+spName+" encountered.");
 				spNames.add(spName);
 			} else {
 				throw new IllegalArgumentException("Encountered an invalid standpoint name.");
@@ -76,9 +90,14 @@ public class SPExpressionHandler extends DefaultHandler {
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		
 		if (qName.equalsIgnoreCase("standpointAxiom")) {
-			
-			System.out.print(this + " >> Standpoint names: ");
-			SPParser.printSet(spNames);
+			System.out.println(this + " >> Standoint axiom name: " + spAxiomName);
+		} else if (qName.equalsIgnoreCase("Box") || qName.equalsIgnoreCase("Diamond")) {
+			if (opCount != 1) {
+				throw new SAXException("Number of <Box> or <Diamond> elements must be exactly 1.");
+			} else {
+				System.out.print(this + " >> Standpoint names: ");
+				SPParser.printSet(spNames);
+			}
 		} else if (bSP) {
 			
 			bSP = false;

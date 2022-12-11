@@ -52,16 +52,20 @@ public class SPParserTest {
 		OWLDataFactory dataFactory = manager.getOWLDataFactory();
 		OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create("http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#standpointLabel"));
 		
-		final String spExpression = "<standpointAxiom operator=\"box\">\n"+
-			"  <Standpoint name=\"s1\"/>\n" +
+		final String spExpression = "<standpointAxiom>\n" +
+			"  <Box>\n" +
+			"    <Standpoint name=\"s1\"/>\n" +
+			"  </Box>\n" +
 			"</standpointAxiom>";
 			
 		OWLLiteral value = dataFactory.getOWLLiteral(spExpression);
 		OWLAnnotation annotation = dataFactory.getOWLAnnotation(label, value);
 		
 		final String expectedXMLString = "<?xml version=\"1.0\"?>\n" +
-			"<standpointAxiom operator=\"box\">\n" +
-			"  <Standpoint name=\"s1\"/>\n" +
+			"<standpointAxiom>\n" +
+			"  <Box>\n" +
+			"    <Standpoint name=\"s1\"/>\n" +
+			"  </Box>\n" +
 			"</standpointAxiom>";
 			
 		String actualXMLString = SPParser.spAnnotationToXML(annotation);
@@ -82,24 +86,26 @@ public class SPParserTest {
 		OWLDataFactory dataFactory = manager.getOWLDataFactory();
 		final OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create("http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#standpointLabel"));
 		
-		final String spExpression = "<standpointAxiom operator=\"diamond\">\n" +
-			"  <MINUS>\n" +
-			"    <Standpoint name=\"*\"/>\n" +
-			"    <UNION>\n" +
-			"      <INTERSECTION>\n" +
-			"        <Standpoint name=\"spA\"/>\n" +
-			"        <Standpoint name=\"spB\"/>\n" +
-			"      </INTERSECTION>\n" +
-			"      <Standpoint name=\"s111\"/>\n" +
-			"    </UNION>\n" +
-			"  </MINUS>\n" +
+		final String spExpression = "<standpointAxiom>\n" +
+			"  <Diamond>\n" +
+			"    <MINUS>\n" +
+			"      <Standpoint name=\"*\"/>\n" +
+			"      <UNION>\n" +
+			"        <INTERSECTION>\n" +
+			"          <Standpoint name=\"spA\"/>\n" +
+			"          <Standpoint name=\"spB\"/>\n" +
+			"        </INTERSECTION>\n" +
+			"        <Standpoint name=\"s111\"/>\n" +
+			"      </UNION>\n" +
+			"    </MINUS>\n" +
+			"  </Diamond>\n" +
 			"</standpointAxiom>";
 		
 		final OWLLiteral value = dataFactory.getOWLLiteral(spExpression);
 		final OWLAnnotation annotation = dataFactory.getOWLAnnotation(label, value);
 		
 		SPParser parser = new SPParser();
-		parser.parseSPExpression(SPParser.spAnnotationToXML(annotation));
+		parser.parseSPOperator(SPParser.spAnnotationToXML(annotation));
 		Set<String> actualSPNameSet = parser.spNames;
 		
 		assertEquals(expectedSPNameSet, actualSPNameSet);
@@ -123,17 +129,21 @@ public class SPParserTest {
 		
 		final OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create(ontologyIRI + "#standpointLabel"));
 		
-		final String spExpression1 = "<standpointAxiom operator=\"box\">\n" +
-			"  <Standpoint name=\"s1\"/>\n" +
+		final String spExpression1 = "<standpointAxiom>\n" +
+			"  <Box>\n" +
+			"    <Standpoint name=\"s1\"/>\n" +
+			"  </Box>\n" +
 			"</standpointAxiom>";
-		final String spExpression2 = "<standpointAxiom operator=\"diamond\">\n" +
-			"  <MINUS>\n" +
-			"    <Standpoint name=\"*\"/>\n" +
-			"    <UNION>\n" +
-			"      <Standpoint name=\"s1\"/>\n" +
-			"      <Standpoint name=\"s2\"/>\n" +
-			"    </UNION>\n" +
-			"  </MINUS>\n" +
+		final String spExpression2 = "<standpointAxiom>\n" +
+			"  <Diamond>\n" +
+			"    <MINUS>\n" +
+			"      <Standpoint name=\"*\"/>\n" +
+			"      <UNION>\n" +
+			"        <Standpoint name=\"s1\"/>\n" +
+			"        <Standpoint name=\"s2\"/>\n" +
+			"      </UNION>\n" +
+			"    </MINUS>\n" +
+			"  </Diamond>\n" +
 			"</standpointAxiom>";
 		
 		final OWLLiteral value1 = dataFactory.getOWLLiteral(spExpression1);
@@ -169,20 +179,26 @@ public class SPParserTest {
 		
 		final OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create(ontologyIRI + "#standpointLabel"));
 		
-		final String spExpression1 = "<standpointAxiom operator=\"box\">\n" +
-			"  <Standpoint name=\"s1\"/>\n" +
+		final String spExpression1 = "<standpointAxiom>\n" +
+			"  <Box>\n" +
+			"    <Standpoint name=\"s1\"/>\n" +
+			"  </Box>\n" +
 			"</standpointAxiom>";
-		final String spExpression2 = "<standpointAxiom operator=\"diamond\">\n" +
-			"  <MINUS>\n" +
+		final String spExpression2 = "<standpointAxiom>\n" +
+			"  <Diamond>\n" +
+			"    <MINUS>\n" +
+			"      <Standpoint name=\"*\"/>\n" +
+			"      <UNION>\n" +
+			"        <Standpoint name=\"s1\"/>\n" +
+			"        <Standpoint name=\"s2\"/>\n" +
+			"      </UNION>\n" +
+			"    </MINUS>\n" +
+			"  </Diamond>\n" +
+			"</standpointAxiom>";
+		final String spExpression3 = "<standpointAxiom>\n" +
+			"  <Box>\n" +
 			"    <Standpoint name=\"*\"/>\n" +
-			"    <UNION>\n" +
-			"      <Standpoint name=\"s1\"/>\n" +
-			"      <Standpoint name=\"s2\"/>\n" +
-			"    </UNION>\n" +
-			"  </MINUS>\n" +
-			"</standpointAxiom>";
-		final String spExpression3 = "<standpointAxiom operator=\"box\">\n" +
-			"  <Standpoint name=\"*\"/>\n" +
+			"  </Box>\n" +
 			"</standpointAxiom>";
 		
 		final OWLLiteral value1 = dataFactory.getOWLLiteral(spExpression1);

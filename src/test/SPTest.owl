@@ -56,8 +56,10 @@
         <owl:annotatedSource rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#B"/>
         <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#subClassOf"/>
         <owl:annotatedTarget rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#A"/>
-        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;standpointAxiom operator=&quot;box&quot;&gt;
-  &lt;Standpoint name=&quot;s1&quot;/&gt;
+        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;standpointAxiom&gt;
+  &lt;Box&gt;
+    &lt;Standpoint name=&quot;s1&quot;/&gt;
+  &lt;/Box&gt;
 &lt;/standpointAxiom&gt;</standpointLabel>
     </owl:Axiom>
     
@@ -86,8 +88,10 @@
                 </owl:intersectionOf>
             </owl:Class>
         </owl:annotatedTarget>
-        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;standpointAxiom operator=&quot;box&quot;&gt;
-  &lt;Standpoint name=&quot;*&quot;/&gt;
+        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;standpointAxiom&gt;
+  &lt;Box&gt;
+    &lt;Standpoint name=&quot;*&quot;/&gt;
+  &lt;/Box&gt;
 &lt;/standpointAxiom&gt;</standpointLabel>
     </owl:Axiom>
     
@@ -121,14 +125,16 @@
         <owl:annotatedSource rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Z"/>
         <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#subClassOf"/>
         <owl:annotatedTarget rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X"/>
-        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;standpointAxiom operator=&quot;diamond&quot;&gt;
-  &lt;MINUS&gt;
-    &lt;Standpoint name=&quot;*&quot;/&gt;
-    &lt;UNION&gt;
-      &lt;Standpoint name=&quot;s1&quot;/&gt;
-      &lt;Standpoint name=&quot;s2&quot;/&gt;
-    &lt;/UNION&gt;
-  &lt;/MINUS&gt;
+        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;standpointAxiom&gt;
+  &lt;Diamond&gt;
+    &lt;MINUS&gt;
+      &lt;Standpoint name=&quot;*&quot;/&gt;
+      &lt;UNION&gt;
+        &lt;Standpoint name=&quot;s1&quot;/&gt;
+        &lt;Standpoint name=&quot;s2&quot;/&gt;
+      &lt;/UNION&gt;
+    &lt;/MINUS&gt;
+  &lt;/Diamond&gt;
 &lt;/standpointAxiom&gt;</standpointLabel>
     </owl:Axiom>
     

@@ -7,7 +7,31 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:SPTest="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#">
-    <owl:Ontology rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest"/>
+    <owl:Ontology rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest">
+        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;booleanCombination&gt;
+  &lt;OR&gt;
+    &lt;NOT&gt;
+      &lt;Box&gt;
+        &lt;Standpoint name=&quot;s1&quot;/&gt;
+        &lt;SubClassOf&gt;
+          &lt;LHS&gt;A and B&lt;/LHS&gt;
+          &lt;RHS&gt;C&lt;/RHS&gt;
+        &lt;/SubClassOf&gt;
+      &lt;/Box&gt;
+    &lt;/NOT&gt;
+    &lt;Diamond&gt;
+      &lt;Standpoint name=&quot;s2&quot;\&gt;
+      &lt;EquivalentClasses&gt;
+        &lt;LHS&gt;A and B&lt;/LHS&gt;
+        &lt;RHS&gt;X&lt;/RHS&gt;
+      &lt;/EquivalentClasses&gt;
+    &lt;/Diamond&gt;
+    &lt;NOT&gt;
+      &lt;standpointAxiom name=&quot;§ax1&quot;/&gt;
+    &lt;/NOT&gt;
+  &lt;/OR&gt;
+&lt;/booleanCombination&gt;</standpointLabel>
+    </owl:Ontology>
     
 
 
@@ -31,6 +55,23 @@
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#r -->
+
+    <owl:ObjectProperty rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#r"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
     // Classes
     //
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -43,6 +84,7 @@
 
     <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#A">
         <owl:disjointWith rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X"/>
+        <rdfs:comment>comment</rdfs:comment>
     </owl:Class>
     
 
@@ -97,6 +139,19 @@
     
 
 
+    <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#W -->
+
+    <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#W">
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#r"/>
+                <owl:allValuesFrom rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#A"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
     <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X -->
 
     <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X">
@@ -113,6 +168,16 @@
     <owl:Class rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Y">
         <rdfs:subClassOf rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X"/>
     </owl:Class>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#Y"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#subClassOf"/>
+        <owl:annotatedTarget rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#X"/>
+        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;standpointAxiom name=&quot;§ax1&quot;&gt;
+  &lt;Box&gt;
+    &lt;Standpoint name=&quot;s1&quot;/&gt;
+  &lt;/Box&gt;
+&lt;/standpointAxiom&gt;</standpointLabel>
+    </owl:Axiom>
     
 
 
@@ -137,33 +202,6 @@
   &lt;/Diamond&gt;
 &lt;/standpointAxiom&gt;</standpointLabel>
     </owl:Axiom>
-    
-
-
-    <!-- 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Annotations
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-     -->
-
-    <rdf:Description rdf:about="http://www.w3.org/2002/07/owl#Thing">
-        <standpointLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&lt;booleanCombination&gt;
-  &lt;AND&gt;
-    &lt;NOT&gt;
-      &lt;standpointAxiom operator=&quot;box&quot;&gt;
-        &lt;Standpoint name=&quot;s1&quot;&gt;
-      &lt;/standpointAxiom&gt;
-      &lt;SubClassOf&gt;
-        &lt;LHS&gt;C and D&lt;/LHS&gt;
-        &lt;RHS&gt;X&lt;/RHS&gt;
-      &lt;/SubClassOf&gt;
-    &lt;/NOT&gt;
-    &lt;standpointAxiom name=&quot;§ax1&quot;/&gt;
-  &lt;/AND&gt;
-&lt;/booleanCombination&gt;</standpointLabel>
-    </rdf:Description>
 </rdf:RDF>
 
 

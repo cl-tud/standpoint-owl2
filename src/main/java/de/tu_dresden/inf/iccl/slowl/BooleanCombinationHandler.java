@@ -28,11 +28,18 @@ public class BooleanCombinationHandler extends DefaultHandler {
 	private Stack<Integer> elements = new Stack<Integer>();
 	
 	// counters for LHS, RHS
-	private Integer ls = 0;
-	private Integer rs = 0;
+	private int ls = 0;
+	private int rs = 0;
 	
 	// true when there occurs an unnamed standpointAxiom
 	private boolean bSPAxiom = false;
+	
+	// set of defined axiom names initialised by constructor
+	private Set<String> defAxiomNames = new HashSet<String>();
+	
+	public BooleanCombinationHandler(Set<String> spAxiomNames) {
+		defAxiomNames = spAxiomNames;
+	}
 	
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -71,8 +78,12 @@ public class BooleanCombinationHandler extends DefaultHandler {
 		} else if (qName.equalsIgnoreCase("standpointAxiom")) {
 			String spAxiomName = attributes.getValue("name");
 			if (spAxiomName != null) {
-				// need to check if there really is a standpoint axiom with that name
-				// TO DO //
+				// check if there really is a standpoint axiom with that name
+				if (defAxiomNames.contains(spAxiomName)) {
+					// TO DO //
+				} else {
+					throw new SAXException("There is no axiom with name \"" + spAxiomName + "\".");
+				}
 			}
 		} else if (qName.equalsIgnoreCase("Box") || qName.equalsIgnoreCase("Diamond")) {
 			// use SPOperatorHandler

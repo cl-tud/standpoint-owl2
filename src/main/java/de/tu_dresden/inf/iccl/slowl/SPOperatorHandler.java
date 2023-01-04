@@ -23,12 +23,12 @@ public class SPOperatorHandler extends DefaultHandler {
 	 *  0 - box
 	 *  1 - diamond
 	 */ 
-	Integer operator = -1;
+	int operator = -1;
 	
 	/* Counter for number of <Box> and <Diamond> elements used.
 	 * Should be exactly 1 at the end of the expression.
 	 */
-	Integer opCount = 0;
+	private int opCount = 0;
 	
 	private boolean bSP = false;
 	private boolean bUnion = false;
@@ -96,7 +96,7 @@ public class SPOperatorHandler extends DefaultHandler {
 				throw new SAXException("Number of <Box> or <Diamond> elements must be exactly 1.");
 			} else {
 				System.out.print(this + " >> Standpoint names: ");
-				SPParser.printSet(spNames);
+				Renderer.printSet(spNames);
 			}
 		} else if (bSP) {
 			

@@ -2,6 +2,7 @@ package de.tu_dresden.inf.iccl.slowl;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,8 +11,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /* Class specifying what happens when parser encounters start/end
- * of elements in XML file.
- * (Only stores appearing standpoint names until now.)
+ * of elements in a standpoint operator XML String.
  */
 public class SPOperatorHandler extends DefaultHandler {
 	
@@ -30,10 +30,13 @@ public class SPOperatorHandler extends DefaultHandler {
 	 */
 	private int opCount = 0;
 	
-	private boolean bSP = false;
-	private boolean bUnion = false;
-	private boolean bIntersection = false;
-	private boolean bMinus = false;
+	/* Stack to keep track of the nesting of the XML elements.
+	 * -1 - root (saves us additional emptiness checking)
+	 * 0  - UNION
+	 * 1  - INTERSECTION
+	 * 2  - MINUS
+	 */
+	private Stack<Integer> elements = new Stack<Integer>();
 	
 	private Pattern sp = Pattern.compile("[a-zA-Z]+\\d*");
 	private Pattern ax = Pattern.compile("§[a-zA-z]+\\d*");
@@ -69,19 +72,18 @@ public class SPOperatorHandler extends DefaultHandler {
 			operator = 1;
 			opCount++;
 		} else if (qName.equalsIgnoreCase("Standpoint")) {
-			bSP = true;
 			String spName = attributes.getValue("name");
 			if (isSPName(spName)) {
 				spNames.add(spName);
 			} else {
-				throw new IllegalArgumentException("Encountered an invalid standpoint name.");
+				throw new SAXException("Encountered an invalid standpoint name.");
 			}
 		} else if (qName.equalsIgnoreCase("UNION")) {
-			bUnion = true;
+			elements.push(0);
 		} else if (qName.equalsIgnoreCase("INTERSECTION")) {
-			bIntersection = true;
+			elements.push(1);
 		} else if (qName.equalsIgnoreCase("MINUS")) {
-			bMinus = true;
+			elements.push(2);
 		}
 		
 	}
@@ -98,18 +100,18 @@ public class SPOperatorHandler extends DefaultHandler {
 				System.out.print(this + " >> Standpoint names: ");
 				Renderer.printSet(spNames);
 			}
-		} else if (bSP) {
+		} else if (qName.equalsIgnoreCase("Standpoint")) {
 			
-			bSP = false;
-		} else if (bUnion) {
 			
-			bUnion = false;
-		} else if (bIntersection) {
+		} else if (qName.equalsIgnoreCase("UNION")) {
 			
-			bIntersection = false;
-		} else if (bMinus) {
+			elements.pop();
+		} else if (qName.equalsIgnoreCase("INTERSECTION")) {
 			
-			bMinus = false;
+			elements.pop();
+		} else if (qName.equalsIgnoreCase("MINUS")) {
+			
+			elements.pop();
 		}
 		
 	}

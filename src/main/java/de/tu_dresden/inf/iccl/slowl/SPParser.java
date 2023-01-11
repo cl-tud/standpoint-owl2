@@ -2,6 +2,7 @@ package de.tu_dresden.inf.iccl.slowl;
 
 import java.io.File;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.function.Predicate;
 import java.util.HashMap;
@@ -13,15 +14,24 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AxiomType;
@@ -45,6 +55,7 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.parameters.Imports;
 
 public class SPParser {
+	
 	// set of AxiomTypes whose annotation by standpointLabels is currently supported
 	public static final Set<AxiomType> supportedAxiomTypes = Set.of(AxiomType.SUBCLASS_OF, AxiomType.EQUIVALENT_CLASSES);
 	
@@ -63,36 +74,54 @@ public class SPParser {
 	// axiom names that count as <Diamond> if they have a <Box> operator
 	private Set<String> checkAxiomNames = new HashSet<String>();
 	
+	private SAXParser saxParser;
+	private XMLReader xmlReader;
+	
+	private DocumentBuilder domBuilder;
+
+	private Transformer transformer;
+	
+	public SPParser() {
+		try {
+			saxParser = SAXParserFactory.newInstance().newSAXParser();
+			xmlReader = saxParser.getXMLReader();
+			domBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			transformer = TransformerFactory.newInstance().newTransformer();
+			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * Adds recorded standpoint names and the standpoint axiom name to
 	 * spNames and spAxiomNames, respectively.
 	 */
 	public void parseSPOperator(String spOperator) {
+		SPOperatorHandler spOperatorHandler;
 		try {
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser saxParser = factory.newSAXParser();
-			XMLReader xmlReader = saxParser.getXMLReader();
-			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
+			spOperatorHandler = new SPOperatorHandler();
 			xmlReader.setContentHandler(spOperatorHandler);
 			xmlReader.parse(new InputSource(new StringReader(spOperator)));
-			
-			Set<String> names = spOperatorHandler.spNames;
-			names.remove("*");
-			Iterator<String> it = names.iterator();
-			it.forEachRemaining(next -> spNames.add(next));
-			System.out.print(this + " >> Standpoint names: ");
-			Renderer.printSet(spNames);
-			
-			String axiomName = spOperatorHandler.spAxiomName;
-			if (axiomName != null) {
-				spAxiomNames.add(axiomName);
-			}
-			System.out.print(this + " >> Axiom names: ");
-			Renderer.printSet(spAxiomNames);
-			
 		} catch (Exception e) {
 			e.printStackTrace();
+			return;
 		}
+		
+		Set<String> names = spOperatorHandler.spNames;
+		names.remove("*");
+		Iterator<String> it = names.iterator();
+		it.forEachRemaining(next -> spNames.add(next));
+		System.out.print(this + " >> Standpoint names: ");
+		Renderer.printSet(spNames);
+		
+		String axiomName = spOperatorHandler.spAxiomName;
+		if (axiomName != null) {
+			spAxiomNames.add(axiomName);
+		}
+		System.out.print(this + " >> Axiom names: ");
+		Renderer.printSet(spAxiomNames);
 	}
 	
 	/**
@@ -227,22 +256,63 @@ public class SPParser {
 		return count;
 	}
 	
+	/**
+	 * @return String array where first element is the local name of the root and the other elements the children.
+	 */
+	// needs testing //
+	public String[] getRootAndChildElements(String xmlString) {
+		Document xmlDoc;
+		try {
+			xmlDoc = domBuilder.parse(new InputSource(new StringReader(xmlString)));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new String[3];
+		}
+		
+		Node root = xmlDoc.getFirstChild();
+		if (root.getNodeType() != Node.ELEMENT_NODE) {
+			System.out.println(this + " >> No child elements.");
+			return new String[3];
+		}
+		
+		NodeList childList = root.getChildNodes();
+		
+		Node[] children = new Node[childList.getLength()];
+		int length = 0;
+		for (int i = 0; i < childList.getLength(); i++) {
+			if (childList.item(i) == null || childList.item(i).getNodeType() != Node.ELEMENT_NODE) {
+				continue;
+			}
+			children[length] = childList.item(i);
+			length++;
+		}
+		
+		String[] rootAndChildElements = new String[length + 1];
+		
+		rootAndChildElements[0] = ((Element) root).getTagName();
+		
+		StringWriter buffer;
+		int idx;
+		for (int i = 0; i < length; i++) {
+			buffer = new StringWriter();
+			try {
+				transformer.transform(new DOMSource(children[i]), new StreamResult(buffer));
+			} catch (Exception e) {
+				e.printStackTrace();
+				continue;
+			}
+			rootAndChildElements[i + 1] = buffer.toString().replaceAll("(?m)^[ \t]*\r?\n", "").replaceAll("\r","").trim();
+		}
+		
+		return rootAndChildElements;
+	}
+	
 	public void getNames(OWLOntology ontology) {
 		// reset spAxiomNames
 		spAxiomNames = new HashSet<String>();
 		
 		// reset spNames
 		spNames = new HashSet<String>();
-		
-		XMLReader xmlReader;
-		try{
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser saxParser = factory.newSAXParser();
-			xmlReader = saxParser.getXMLReader();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
 		
 		Set<OWLAnnotation> annotations = getAnnotations(ontology);
 		String xmlString = null;
@@ -251,6 +321,7 @@ public class SPParser {
 			xmlString = spAnnotationToXML(annotation);
 			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
 			xmlReader.setContentHandler(spOperatorHandler);
+			
 			try {
 				xmlReader.parse(new InputSource(new StringReader(xmlString)));
 			} catch (Exception e) {
@@ -282,16 +353,6 @@ public class SPParser {
 		
 		// reset spAxiomNameMap
 		spAxiomNameMap = new HashMap<String, String>();
-		
-		SAXParserFactory factory;
-		SAXParser saxParser;
-		try { 
-			factory = SAXParserFactory.newInstance();
-			saxParser = factory.newSAXParser();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
 		
 		// TO DO //
 		Set<OWLSubClassOfAxiom> subClassOfAxioms = getAnnotatedSubClassOfAxioms(ontology);
@@ -390,22 +451,13 @@ public class SPParser {
 		// reset spAxiomNames
 		spAxiomNames = new HashSet<String>();
 		
-		XMLReader xmlReader;
-		try{
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser saxParser = factory.newSAXParser();
-			xmlReader = saxParser.getXMLReader();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-		
 		String xmlString = null;
 		Set<String> names = new HashSet<String>();
 		for (OWLAnnotation annotation : annotations) {
 			xmlString = spAnnotationToXML(annotation);
 			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
 			xmlReader.setContentHandler(spOperatorHandler);
+			
 			try {
 				xmlReader.parse(new InputSource(new StringReader(xmlString)));
 			} catch (Exception e) {
@@ -423,19 +475,36 @@ public class SPParser {
 		Renderer.printSet(spAxiomNames);
 	}
 	
+	public String getFirstSPName(String spExpr) {
+		String spExprLower = spExpr.toLowerCase();
+		
+		int start = spExprLower.indexOf("<standpoint ");
+		if (start < 0) {
+			return null;
+		}
+		start = spExprLower.indexOf("name", start);
+		if (start < 0) {
+			return null;
+		}
+		start = spExprLower.indexOf("=", start);
+		if (start < 0) {
+			return null;
+		}
+		start = spExprLower.indexOf("\"", start);
+		if (start < 0) {
+			return null;
+		}
+		int end = spExprLower.indexOf("\"", start + 1);
+		if (end < 0) {
+			return null;
+		}
+		
+		return spExpr.substring(start, end).replace("\"", " ").trim();
+	}
+	
 	public void getSPNames(OWLOntology ontology) {
 		// reset spNames
 		spNames = new HashSet<String>();
-		
-		XMLReader xmlReader;
-		try{
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser saxParser = factory.newSAXParser();
-			xmlReader = saxParser.getXMLReader();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
 		
 		Set<OWLAnnotation> annotations = getAnnotations(ontology);
 		String xmlString = null;
@@ -444,6 +513,7 @@ public class SPParser {
 			xmlString = spAnnotationToXML(annotation);
 			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
 			xmlReader.setContentHandler(spOperatorHandler);
+			
 			try {
 				xmlReader.parse(new InputSource(new StringReader(xmlString)));
 			} catch (Exception e) {
@@ -465,28 +535,20 @@ public class SPParser {
 		// reset spNames
 		spNames = new HashSet<String>();
 		
-		XMLReader xmlReader;
-		try{
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser saxParser = factory.newSAXParser();
-			xmlReader = saxParser.getXMLReader();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-		
 		String xmlString = null;
 		Set<String> names = new HashSet<String>();
 		for (OWLAnnotation annotation : annotations) {
 			xmlString = spAnnotationToXML(annotation);
 			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
 			xmlReader.setContentHandler(spOperatorHandler);
+			
 			try {
 				xmlReader.parse(new InputSource(new StringReader(xmlString)));
 			} catch (Exception e) {
 				e.printStackTrace();
 				continue;
 			}
+			
 			names = spOperatorHandler.spNames;
 			names.remove("*");
 			Iterator<String> it = names.iterator();

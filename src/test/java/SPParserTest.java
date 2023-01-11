@@ -669,4 +669,34 @@ public class SPParserTest {
 		assertEquals(expectedSPNames, actualSPNames);
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
 	}
+	
+	@Test
+	public void givenXMLString_whenGetRootAndChildElements_thenReturnStringArray() {
+		final String xmlString1 = "<?xml version=\"1.0\"?>\n" +
+			"<ROOT>\n" +
+			"  <Child1 name=\"s1\"/>\n" +
+			"  <Child2 name=\"s2\"/>\n" +
+			"</ROOT>";
+		final String xmlString2 = "<ROOT attr=\"value\">\n" +
+			"  <Child1>\n" +
+			"    <SubChild name=\"s1\"/>\n" +
+			"  </Child1>\n" +
+			"  <Child2 name=\"s2\"/>\n" +
+			"</ROOT>";
+			
+		final String[] expectedArr1 = {"ROOT", "<Child1 name=\"s1\"/>", "<Child2 name=\"s2\"/>"};
+		final String child1 = "<Child1>\n" +
+			"    <SubChild name=\"s1\"/>\n" +
+			"</Child1>";
+		final String[] expectedArr2 = {"ROOT", child1, "<Child2 name=\"s2\"/>"};
+		
+		SPParser parser = new SPParser();
+		
+		final String[] actualArr1 = parser.getRootAndChildElements(xmlString1);
+		final String[] actualArr2 = parser.getRootAndChildElements(xmlString2);
+		
+		assertEquals(expectedArr1, actualArr1);
+		assertEquals(expectedArr2, actualArr2);
+		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
+	}
 }

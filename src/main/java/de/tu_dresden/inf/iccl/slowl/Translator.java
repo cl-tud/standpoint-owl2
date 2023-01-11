@@ -11,10 +11,17 @@ import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.RDFXMLWriter;
+
+/* M_<spName>_<int> are (not yet reserved) new OWLClasses.
+ *
+ * universal_role is the (not yet reserved) univeral OWLObjectProperty.
+ */
 
 public class Translator {
 	int iPrecisifications;
@@ -22,13 +29,20 @@ public class Translator {
 	Set<String> spNames;
 	SPParser parser;
 	OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+	OWLDataFactory dataFactory = manager.getOWLDataFactory();
 	OWLOntology ontology = null;
 	OWLOntology outputOntology = null;
-	Map<String, String[]> m;
 	OutputStream out;
 	String ontologyIRIString;
+	String outputOntologyIRIString;
 	IRI ontologyIRI;
 	IRI outputOntologyIRI;
+	
+	// maps standpoint name to set of concepts of the form M_<spName>_<int> (as string)
+	Map<String, String[]> m;
+	
+	// universal role
+	OWLObjectProperty u;
 	
 	public Translator(File f) {
 		parser = new SPParser();
@@ -43,7 +57,8 @@ public class Translator {
 			ontologyIRIString = parser.getOntologyIRIString(ontology);
 			ontologyIRI = IRI.create(ontologyIRIString);
 			
-			outputOntologyIRI = IRI.create(ontologyIRI + "_translated");
+			outputOntologyIRIString = ontologyIRIString + "_trans";
+			outputOntologyIRI = IRI.create(outputOntologyIRIString);
 			try {
 				outputOntology = manager.createOntology(outputOntologyIRI);
 			} catch (Exception e) {
@@ -55,6 +70,8 @@ public class Translator {
 			parser.getNames(ontology);
 			spAxiomNames = parser.spAxiomNames;
 			spNames = parser.spNames;
+			
+			u = dataFactory.getOWLObjectProperty(IRI.create(outputOntologyIRIString + "#universal_role"));
 		
 			m = new HashMap<String, String[]>();
 			String[] new_concepts;
@@ -107,19 +124,41 @@ public class Translator {
 	}
 	
 	/**
-	  * Transforms standpoint expression to RDF/XML String (OWL2).
-	  *
-	  * @param prc 		integer denoting a precisification
-	  * @param spExpr	the standpoint expression
-	  */
-	public String transExpr(int prc, String spExpr) {
-		if (spNames.contains(spExpr)) {
-			// TO DO //
-			// need to use RDFXMLWriter or manage output ontology first and then write (probably)
+	 * Transforms standpoint expression to OWLClassExpression.
+	 *
+	 * @param prc 		integer denoting a precisification
+	 * @param spExpr	standpoint expression
+	 */
+	public OWLClassExpression transExpr(int prc, String spExpr) throws IllegalArgumentException {
+		if (spExpr.toLowerCase().trim().indexOf("<standpoint ") == 0) {
+			String spName = parser.getFirstSPName(spExpr);
+			if (spName == null) {
+				throw new IllegalArgumentException("Illegal standpoint expression; no standpoint name.");
+			}
+			
+			// do we need to treat * separately? //
+			
+			return dataFactory.getOWLObjectAllValuesFrom(u, dataFactory.getOWLClass(IRI.create(outputOntologyIRIString + "#M_" + spName + "_" + prc)));
 		}
 		
-		// TO DO //
-		return null;
+		String[] elements = parser.getRootAndChildElements(spExpr);
+		if (elements.length != 3) {
+			System.out.print(this + " >> Elements: ");
+			for (String e : elements) {
+				System.out.print(e + ", ");
+			}
+			throw new IllegalArgumentException("Illegal standpoint expression; not exactly 2 child elements.");
+		}
+		
+		if (elements[0].equalsIgnoreCase("UNION")) {
+			return dataFactory.getOWLObjectUnionOf(transExpr(prc, elements[1]), transExpr(prc, elements[2]));
+		} else if (elements[0].equalsIgnoreCase("INTERSECTION")) {
+			return dataFactory.getOWLObjectIntersectionOf(transExpr(prc, elements[1]), transExpr(prc, elements[2]));
+		} else if (elements[0].equalsIgnoreCase("MINUS")) {
+			return dataFactory.getOWLObjectIntersectionOf(transExpr(prc, elements[1]), dataFactory.getOWLObjectComplementOf(transExpr(prc, elements[2])));
+		} else {
+			throw new IllegalArgumentException("Illegal standpoint expression.");
+		}
 	}
 	
 	

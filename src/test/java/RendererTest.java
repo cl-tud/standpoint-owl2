@@ -12,6 +12,7 @@ import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectComplementOf;
 import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectUnionOf;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
@@ -57,7 +58,6 @@ public class RendererTest {
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
 	}
 	
-	// TO DO //
 	@Test
 	public void givenClassExpression_whenWriteClassExpression_thenReturnManchesterSyntax() {
 		final String iri = "http://slowl.test.org";
@@ -71,6 +71,11 @@ public class RendererTest {
 		final OWLClassExpression x = dataFactory.getOWLClass(IRI.create(iri + "#X")).nestedClassExpressions().toArray(OWLClassExpression[]::new)[0];
 		final OWLClassExpression y = dataFactory.getOWLClass(IRI.create(iri + "#Y")).nestedClassExpressions().toArray(OWLClassExpression[]::new)[0];
 		final OWLClassExpression z = dataFactory.getOWLClass(IRI.create(iri + "#Z")).nestedClassExpressions().toArray(OWLClassExpression[]::new)[0];
+		
+		final OWLObjectProperty r = dataFactory.getOWLObjectProperty(IRI.create(iri + "#r"));
+		final OWLClassExpression r_only_A = dataFactory.getOWLObjectAllValuesFrom(r, a);
+		final OWLClassExpression inv_r_only_A_and_B = dataFactory.getOWLObjectAllValuesFrom(dataFactory.getOWLObjectInverseOf(r), dataFactory.getOWLObjectIntersectionOf(a, b));
+		final OWLClassExpression r_some_A = dataFactory.getOWLObjectSomeValuesFrom(r, a);
 		
 		final OWLClassExpression[] a_b = {a, b};
 		OWLClassExpression[] arr = dataFactory.getOWLObjectIntersectionOf(a_b).nestedClassExpressions().toArray(OWLClassExpression[]::new);
@@ -104,14 +109,24 @@ public class RendererTest {
 		final String expectedString2 = "(not C)";
 		final String expectedString3 = "(((A and B and (X or Y)) or ((not C) and (not Z))) and (not C) and (not Z))";
 		// the order of conjunct/disjuncts might differ
+		final String expectedString4 = "(r only A)";
+		final String expectedString5 = "(inverse(r) only (A and B))";
+		final String expectedString6 = "(r some A)";
 		
 		final String actualString1 = Renderer.writeClassExpression(a_and_b);
 		final String actualString2 = Renderer.writeClassExpression(not_c);
 		final String actualString3 = Renderer.writeClassExpression(inter3);
+		final String actualString4 = Renderer.writeClassExpression(r_only_A);
+		final String actualString5 = Renderer.writeClassExpression(inv_r_only_A_and_B);
+		final String actualString6 = Renderer.writeClassExpression(r_some_A);
 		
 		assertEquals(expectedString1, actualString1);
 		assertEquals(expectedString2, actualString2);
 		assertEquals(expectedString3, actualString3);
+		assertEquals(expectedString4, actualString4);
+		assertEquals(expectedString5, actualString5);
+		assertEquals(expectedString6, actualString6);
+		
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
 	}
 	

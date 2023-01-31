@@ -4,9 +4,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.ClassExpressionType;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLObjectRestriction;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 public class Renderer {
 	
@@ -22,16 +29,85 @@ public class Renderer {
 		System.out.println("]>");
 	}
 	
+	// needs testing //
+	public static String axiomToXML(OWLAxiom axiom) throws IllegalArgumentException {
+		String result = null;
+		AxiomType type = axiom.getAxiomType();
+		
+		if (type == AxiomType.SUBCLASS_OF) {
+			OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) axiom;
+			OWLClassExpression subClass = subClassOfAxiom.getSubClass();
+			OWLClassExpression superClass = subClassOfAxiom.getSuperClass();
+			
+			result = "<SubClassOf>\n" +
+					 "  <LHS>" + writeClassExpression(subClass)   + "</LHS>\n" +
+					 "  <RHS>" + writeClassExpression(superClass) + "</RHS>\n" +
+					 "</SubClassOf>";
+				
+		} else if (type == AxiomType.EQUIVALENT_CLASSES) {
+			OWLEquivalentClassesAxiom equivalentClassesAxiom = (OWLEquivalentClassesAxiom) axiom;
+			OWLSubClassOfAxiom[] subClassOfAxioms = equivalentClassesAxiom.asOWLSubClassOfAxioms().toArray(OWLSubClassOfAxiom[]::new);
+			
+			if (subClassOfAxioms.length != 2) { // we assume only one pair of OWLSubClassOfAxioms
+				throw new IllegalArgumentException("EquivalentClassesAxiom should have exactly 2 operands.");
+			}
+			
+			result = "<EquivalentClasses>\n" +
+					 "  <LHS>" + writeClassExpression(subClassOfAxioms[0].getSubClass())   + "</LHS>\n" +
+					 "  <RHS>" + writeClassExpression(subClassOfAxioms[0].getSuperClass()) + "</RHS>\n" +
+					 "</EquivalentClasses>";
+					 
+		} else {
+			throw new IllegalArgumentException("Unsupported AxiomType: " + type + ".");
+		}
+		
+		return result;
+	}
+	
 	/**
 	 * @return String representation of given OWLClassExpression in Manchester syntax.
 	 */
 	public static String writeClassExpression(OWLClassExpression expr) {
 		final ClassExpressionType type = expr.getClassExpressionType();
-		//System.out.println("Renderer >> Expression: " + expr);
 		String classID;
+		String propertyID;
 		String exprString;
+		OWLObjectPropertyExpression objectPropertyExpr;
+		OWLObjectProperty objectProperty;
+		OWLObjectRestriction objectRestriction;
 		OWLClassExpression[] components;
-		if (type == ClassExpressionType.OBJECT_UNION_OF) {
+		if (type == ClassExpressionType.OWL_CLASS) {
+			classID = expr.classesInSignature().toArray(OWLClass[]::new)[0].toStringID();
+			return classID.substring(classID.lastIndexOf("#") + 1);
+		} else if (type == ClassExpressionType.OBJECT_ALL_VALUES_FROM) {
+			objectRestriction = (OWLObjectRestriction) expr;
+			objectPropertyExpr = objectRestriction.getProperty();
+			objectProperty = objectPropertyExpr.getNamedProperty();
+			propertyID = objectProperty.toStringID();
+			propertyID = propertyID.substring(propertyID.lastIndexOf("#") + 1);
+			exprString = "(";
+			if (objectPropertyExpr.compareTo(objectProperty.getInverseProperty()) != 0) { // role name
+				exprString += propertyID + " only " + writeClassExpression(getClassExpressionOfObjectRestriction(objectRestriction));
+			} else { // inverse role
+				exprString += "inverse(" + propertyID + ") only " + writeClassExpression(getClassExpressionOfObjectRestriction(objectRestriction));
+			}
+			exprString += ")";
+			return exprString;
+		} else if (type == ClassExpressionType.OBJECT_SOME_VALUES_FROM) {
+			objectRestriction = (OWLObjectRestriction) expr;
+			objectPropertyExpr = objectRestriction.getProperty();
+			objectProperty = objectPropertyExpr.getNamedProperty();
+			propertyID = objectProperty.toStringID();
+			propertyID = propertyID.substring(propertyID.lastIndexOf("#") + 1);
+			exprString = "(";
+			if (objectPropertyExpr.compareTo(objectProperty.getInverseProperty()) != 0) { // role name
+				exprString += propertyID + " some " + writeClassExpression(getClassExpressionOfObjectRestriction(objectRestriction));
+			} else { // inverse role
+				exprString += "inverse(" + propertyID + ") some " + writeClassExpression(getClassExpressionOfObjectRestriction(objectRestriction));
+			}
+			exprString += ")";
+			return exprString;
+		} else if (type == ClassExpressionType.OBJECT_UNION_OF) {
 			components = expr.disjunctSet().toArray(OWLClassExpression[]::new);
 			exprString = "(";
 			for (int i = 0; i < components.length; i++) {
@@ -56,12 +132,9 @@ public class Renderer {
 		} else if (type == ClassExpressionType.OBJECT_COMPLEMENT_OF) {
 			components = expr.nestedClassExpressions().toArray(OWLClassExpression[]::new);
 			return "(not " + writeClassExpression(getInnerExpressionOfComplement(components)) + ")";
-		} else if (type == ClassExpressionType.OWL_CLASS) {
-			classID = expr.classesInSignature().toArray(OWLClass[]::new)[0].toStringID();
-			return classID.substring(classID.lastIndexOf("#") + 1);
 		} else {
-			System.out.println("Unsupported ClassExpressionType " + type + ".");
-			return "?";
+			System.out.println("Renderer >> ERROR: Unsupported ClassExpressionType: " + type + ".");
+			return ""; // maybe change to exception
 		}
 	}
 	
@@ -80,11 +153,10 @@ public class Renderer {
 				maxIndex = i;
 			}
 		}
-		//System.out.println("Renderer >> Index: " + maxIndex);
 		return expressions[maxIndex];
 	}
 	
-	private static OWLClassExpression getInnerExpressionOfComplement(OWLClassExpression[] expressions) throws IllegalArgumentException {
+	public static OWLClassExpression getInnerExpressionOfComplement(OWLClassExpression[] expressions) throws IllegalArgumentException {
 		OWLClassExpression topExpr = getTopLevelExpression(expressions);
 		for (OWLClassExpression expr : expressions) {
 			if (topExpr.compareTo(expr.getObjectComplementOf()) == 0) {
@@ -92,6 +164,10 @@ public class Renderer {
 			}
 		}
 		throw new IllegalArgumentException("Argument array did not represent subexpressions of OWLObjectComplementOf.");
+	}
+	
+	public static OWLClassExpression getClassExpressionOfObjectRestriction(OWLObjectRestriction objRestriction) {
+		return objRestriction.nestedClassExpressions().filter(e -> e.compareTo(objRestriction) != 0).toArray(OWLClassExpression[]::new)[0];
 	}
 
 }

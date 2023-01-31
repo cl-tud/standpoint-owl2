@@ -20,7 +20,7 @@
       &lt;/Box&gt;
     &lt;/NOT&gt;
     &lt;Diamond&gt;
-      &lt;Standpoint name=&quot;s2&quot;\&gt;
+      &lt;Standpoint name=&quot;s2&quot;/&gt;
       &lt;EquivalentClasses&gt;
         &lt;LHS&gt;A and B&lt;/LHS&gt;
         &lt;RHS&gt;X&lt;/RHS&gt;
@@ -202,6 +202,34 @@
   &lt;/Diamond&gt;
 &lt;/standpointAxiom&gt;</standpointLabel>
     </owl:Axiom>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#a -->
+
+    <owl:NamedIndividual rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#a">
+        <rdf:type rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#A"/>
+        <owl:sameAs rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#b"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#b -->
+
+    <owl:NamedIndividual rdf:about="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#b">
+        <r rdf:resource="http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#a"/>
+    </owl:NamedIndividual>
 </rdf:RDF>
 
 

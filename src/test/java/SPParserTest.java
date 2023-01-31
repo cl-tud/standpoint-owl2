@@ -48,6 +48,8 @@ import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -263,13 +265,13 @@ public class SPParserTest {
 			"    </NOT>\n" +
 			"    <Diamond>\n" +
 			"      <Standpoint name=\"s2\"/>\n" +
-			"      <EuqivalentClasses>\n" +
+			"      <EquivalentClasses>\n" +
 			"        <LHS>A and B</LHS>\n" +
 			"        <RHS>X</RHS>\n" +
-			"      </EuqivalentClasses>\n" +
+			"      </EquivalentClasses>\n" +
 			"    </Diamond>\n" +
 			"  </AND>\n" +
-			"<booleanCombination>\n";
+			"</booleanCombination>\n";
 
 		final int expectedDiamonds5 = 2;
 		
@@ -593,9 +595,10 @@ public class SPParserTest {
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
 	}
 	
-	// better to add some more test cases
 	@Test
-	public void givenOntology_whenGetSPAxiomNames_thenSetSPAxiomNamesAndMap() {
+	public void givenOntology_whenParseAxioms_thenSetRelevantSets() {
+		// relevant sets: spAxiomNames, spNames, spAxioms, spAxiomNameMap, standardAxioms
+		
 		final File f = new File("./src/test/SPTest.owl");
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLDataFactory dataFactory = manager.getOWLDataFactory();
@@ -604,34 +607,93 @@ public class SPParserTest {
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(f);
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
 			fail("Ontology test file " + f.getName() + " does not exist.");
 		}
 		
-		Set<String> expectedNames = new HashSet<String>();
-		expectedNames.add("§ax1");
+		final String ontologyIRIString = SPParser.getOntologyIRIString(ontology);
+									  
+		final String expectedAxiom1 = "<Box>\n" +
+									  "    <Standpoint name=\"s1\"/>\n" +
+									  "  <SubClassOf>\n" +
+									  "<LHS>B</LHS>\n" +
+									  "<RHS>A</RHS>\n" +
+									  "</SubClassOf>\n" +
+									  "</Box>\n";
+									  
+		final String expectedAxiom2 = "<Box>\n" +
+									  "    <Standpoint name=\"*\"/>\n" +
+									  "  <EquivalentClasses>\n" +
+									  "<LHS>C</LHS>\n" +
+									  "<RHS>(A and B)</RHS>\n" +
+									  "</EquivalentClasses>\n" +
+									  "</Box>\n";
+		
+		final String expectedAxiom3 = "<Box>\n" +
+									  "    <Standpoint name=\"s1\"/>\n" +
+									  "  <SubClassOf>\n" +
+									  "<LHS>Y</LHS>\n" +
+									  "<RHS>X</RHS>\n" +
+									  "</SubClassOf>\n" +
+									  "</Box>\n";
+									  
+		final String expectedAxiom4 = "<Diamond>\n" +
+									  "    <MINUS>\n" +
+									  "      <Standpoint name=\"*\"/>\n" +
+									  "      <UNION>\n" +
+									  "        <Standpoint name=\"s1\"/>\n" +
+									  "        <Standpoint name=\"s2\"/>\n" +
+									  "      </UNION>\n" +
+									  "    </MINUS>\n" +
+									  "  <SubClassOf>\n" +
+									  "<LHS>Z</LHS>\n" +
+									  "<RHS>X</RHS>\n" +
+									  "</SubClassOf>\n" +
+									  "</Diamond>\n";
+									
+		final Set<String> expectedSPAxioms = Set.of(expectedAxiom1, expectedAxiom2, expectedAxiom3, expectedAxiom4);
+		
+		final Set<String> expectedAxiomNames = Set.of("§ax1");
 		
 		final String expectedValue = "<Box>\n" +
-			"    <Standpoint name=\"s1\"/>\n" +
-			"  </Box>\n" +
-			"<SubClassOf>\n" +
-			"<LHS>Y</LHS>\n" +
-			"<RHS>X</RHS>\n" +
-			"</SubClassOf>\n";
+									 "    <Standpoint name=\"s1\"/>\n" +
+									 "  <SubClassOf>\n" +
+									 "<LHS>Y</LHS>\n" +
+									 "<RHS>X</RHS>\n" +
+									 "</SubClassOf>\n" +
+									 "</Box>\n";
 			
 		Map<String, String> expectedMap = new HashMap<String, String>();
-		try {
-			expectedMap.put("§ax1", expectedValue);
-		} catch (Exception e) {
-			fail("Test incorrectly implemented: could not set expected map value.");
-		}
+		expectedMap.put("§ax1", expectedValue);
 		
-		SPParser parser = new SPParser();
-		parser.getSPAxiomNames(ontology);
-		final Set<String> actualNames = parser.spAxiomNames;
+		final Set<String> expectedSPNames = Set.of("s1", "s2");
+		
+		final OWLObjectProperty r = dataFactory.getOWLObjectProperty(IRI.create(ontologyIRIString + "#r"));
+		final OWLNamedIndividual a = dataFactory.getOWLNamedIndividual(IRI.create(ontologyIRIString + "#a"));
+		final OWLNamedIndividual b = dataFactory.getOWLNamedIndividual(IRI.create(ontologyIRIString + "#b"));
+		final OWLAxiom r_b_a = dataFactory.getOWLObjectPropertyAssertionAxiom(r, b, a);
+		
+		final OWLClass classA = dataFactory.getOWLClass(IRI.create(ontologyIRIString + "#A"));
+		final OWLAxiom a_in_A = dataFactory.getOWLClassAssertionAxiom(classA, a);
+		
+		final OWLAxiom a_eq_b = dataFactory.getOWLSameIndividualAxiom(a, b);
+		
+		final OWLClass classW = dataFactory.getOWLClass(IRI.create(ontologyIRIString + "#W"));
+		final OWLAxiom w_sub_all_r_A = dataFactory.getOWLSubClassOfAxiom(classW, dataFactory.getOWLObjectAllValuesFrom(r, classA));
+		
+		final Set<OWLAxiom> expectedStandardAxioms = Set.of(r_b_a, a_in_A, a_eq_b, w_sub_all_r_A);
+		
+		SPParser parser = new SPParser(ontology);
+		parser.parseAxioms();
+		final Set<String> actualAxiomNames = parser.spAxiomNames;
 		final Map<String, String> actualMap = parser.spAxiomNameMap;
+		final Set<String> actualSPNames = parser.spNames;
+		final Set<OWLAxiom> actualStandardAxioms = parser.standardAxioms;
+		final Set<String> actualSPAxioms = parser.spAxioms;
 		
-		assertEquals(expectedNames, actualNames);
+		assertEquals(expectedAxiomNames, actualAxiomNames);
+		assertEquals(expectedSPNames, actualSPNames);
+		assertEquals(expectedStandardAxioms, actualStandardAxioms);
+		assertEquals(expectedSPAxioms, actualSPAxioms);
 
 		for (String key : expectedMap.keySet()) {
 			assertEquals(expectedMap.get(key), actualMap.get(key));
@@ -641,6 +703,50 @@ public class SPParserTest {
 			assertEquals(expectedMap.get(key), actualMap.get(key));
 		}
 
+		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
+	}
+	
+	@Test
+	public void givenBooleanCombination_whenGetFirstSPAxiomName_thenReturnSPAxiomName() {		
+		final String boolComb1 = "<booleanCombination>\n" +
+								 "  <AND>\n" +
+								 "    <standpointAxiom name=\"§ax1\"/>\n" +
+								 "    <Box>\n" +
+								 "      <Standpoint name=\"s1\"/>\n" +
+								 "      <SubClassOf>\n" +
+								 "        <LHS>A</LHS>" +
+								 "        <RHS>B</RHS>" +
+								 "      </SubClassOf>\n" +
+								 "    </Box>\n" +
+								 "  </AND>\n" +
+								 "</booleanCombination>";
+								 
+		final String boolComb2 = "<booleanCombination>\n" +
+								 "  <AND>\n" +
+								 "    <NOT>\n" +
+								 "      <Box>\n" +
+								 "        <Standpoint name=\"s1\"/>\n" +
+								 "        <SubClassOf>\n" +
+								 "          <LHS>A and B</LHS>\n" +
+								 "          <RHS>C</RHS>\n" +
+								 "        </SubClassOf>\n" +
+								 "      </Box>\n" +
+								 "    </NOT>\n" +
+								 "    <standpointAxiom name=\"§ax2\"/>\n" +
+								 "  </AND>\n" +
+								 "</booleanCombination>\n";
+								 
+		final String expectedName1 = "§ax1";
+		final String expectedName2 = "§ax2";
+
+		SPParser parser = new SPParser();
+		
+		String actualName1 = parser.getFirstSPAxiomName(boolComb1);
+		String actualName2 = parser.getFirstSPAxiomName(boolComb2);
+		
+		assertEquals(expectedName1, actualName1);
+		assertEquals(expectedName2, actualName2);
+		
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
 	}
 	

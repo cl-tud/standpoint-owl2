@@ -32,6 +32,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSameIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.parameters.ChangeApplied;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.rdf.rdfxml.renderer.RDFXMLWriter;
 import org.semanticweb.owlapi.util.BidirectionalShortFormProvider;
@@ -50,7 +51,7 @@ public class Translator {
 	int iPrecisifications;
 	
 	// maps standpoint name to set of concepts of the form M_<spName>_<int> (as string)
-	Map<String, String[]> m;
+	Map<String, String[]> m; // might not need this anymore
 	
 	private Set<String> spAxiomNames;
 	private Set<String> spNames;
@@ -122,8 +123,8 @@ public class Translator {
 					new_concepts_set.add(s);
 				}
 			}
-			System.out.print(this + " >> New concepts: ");
-			Renderer.printSet(new_concepts_set);
+			//System.out.print(this + " >> New concepts: ");
+			//Renderer.printSet(new_concepts_set);
 			
 			// (TO DO) //
 		} else {
@@ -157,7 +158,6 @@ public class Translator {
 	 * Gathers the String representations of all standpointAxioms and booleanCombinations of the input ontology.
 	 * For booleanCombinations, named standpointAxioms are being replaced by their corresponding axioms.
 	 */
-	// needs testing //
 	public Set<String> compileSPAxiomsToTranslate() {
 		Set<String> results = new HashSet<String>();
 		
@@ -210,6 +210,73 @@ public class Translator {
 		}
 		
 		return results;
+	}
+	
+	/**
+	 * Adds SubClassOfAxioms of the form "OWLThing subsumed by trans(prc, phi)" to the output ontology,
+	 * where prc is a precisification and phi is an axiom to be translated.
+	 */
+	// needs testing
+	public void translateOntology() {
+		if (!outputOntology.isEmpty()) {
+			System.out.println(this + " >> WARNING: Output ontology already contains axioms before translation.");
+		}
+		
+		Set<OWLSubClassOfAxiom> translatedAxioms = new HashSet<OWLSubClassOfAxiom>();
+		OWLClassExpression expr;
+		
+		// translate normal (non-standpoint) axioms
+		OWLAxiom[] aBoxAxioms = ontology.aboxAxioms(Imports.INCLUDED).filter(a -> parser.supportedABoxAxiomTypes.contains(a.getAxiomType())).toArray(OWLAxiom[]::new);
+		
+		forABox:
+		for (OWLAxiom ax : aBoxAxioms) {
+			for (int i = 0; i < iPrecisifications; i++) {
+				try {
+					expr = transPos(i, ax);
+				} catch (IllegalArgumentException e) {
+					System.out.println(this + " >> SKIP: Could not translate ABox axiom.\n" + e.getMessage());
+					continue forABox;
+				}
+				translatedAxioms.add(dataFactory.getOWLSubClassOfAxiom(dataFactory.getOWLThing(), expr));
+			}
+		}
+		
+		// translate standpoint axioms
+		Set<String> spAxioms = compileSPAxiomsToTranslate();
+		
+		forSP:
+		for (String ax : spAxioms) {
+			for (int i = 0; i < iPrecisifications; i++) {
+				try {
+					expr = trans(i, ax);
+				} catch (IllegalArgumentException e) {
+					System.out.println(this + " >> SKIP: Could not translate standpoint axiom.\n" + e.getMessage());
+					continue forSP;
+				}
+				translatedAxioms.add(dataFactory.getOWLSubClassOfAxiom(dataFactory.getOWLThing(), expr));
+			}
+		}
+		
+		// add translated axioms to outputOntology
+		ChangeApplied change;
+		int axiomCount;
+		change = outputOntology.addAxioms(translatedAxioms);
+		if (change != ChangeApplied.SUCCESSFULLY) {
+			axiomCount = outputOntology.getAxiomCount(Imports.EXCLUDED);
+			System.out.println(this + " >> ERROR: could not add " + (translatedAxioms.size() - axiomCount) + " translated axioms to output ontology.");
+		}
+		
+		// add universal axioms to outputOntology
+		for (int i = 0; i < iPrecisifications; i++) {
+			expr = dataFactory.getOWLObjectAllValuesFrom(u, dataFactory.getOWLClass(IRI.create(outputOntologyIRIString + "#M_*_" + i)));
+			change = outputOntology.addAxiom(dataFactory.getOWLSubClassOfAxiom(dataFactory.getOWLThing(), expr));
+			if (change != ChangeApplied.SUCCESSFULLY) {
+				System.out.println(this + " >> ERROR: Could not add universal axiom [" + i + "] to output ontology.");
+			}
+		}
+		
+		axiomCount = outputOntology.getAxiomCount(Imports.EXCLUDED);
+		System.out.println(this + " >> Added " + axiomCount + " axioms to output ontology.");
 	}
 	
 	/**
@@ -430,7 +497,7 @@ public class Translator {
 				}
 				
 			} else if (subElements[0].equalsIgnoreCase("Box")) {
-				System.out.println(this + " >> NOT BOX");
+				//System.out.println(this + " >> NOT BOX");
 				subSubElements = parser.getRootAndChildElements(subElements[2]);
 				if (subSubElements.length != 3) {
 					throw new IllegalArgumentException("Illegal boolean combination; axiom element of <Box> does not have exactly 2 child elements.");
@@ -482,7 +549,7 @@ public class Translator {
 				}
 				
 			} else if (subElements[0].equalsIgnoreCase("Diamond")) {
-				System.out.println(this + " >> NOT DIAMOND");
+				//System.out.println(this + " >> NOT DIAMOND");
 				subSubElements = parser.getRootAndChildElements(subElements[2]);
 				if (subSubElements.length != 3) {
 					throw new IllegalArgumentException("Illegal boolean combination; axiom element of <Diamond> does not have exactly 2 child elements.");
@@ -540,7 +607,7 @@ public class Translator {
 			}
 			
 		} else if (elements[0].equalsIgnoreCase("AND")) {
-			System.out.println(this + " >> AND");
+			//System.out.println(this + " >> AND");
 			if (elements.length != 3) {
 				throw new IllegalArgumentException("Illegal boolean combination; <AND> does not have exactly 2 child elements.");
 			}
@@ -583,7 +650,7 @@ public class Translator {
 			result = dataFactory.getOWLObjectIntersectionOf(conjunctSet);
 			
 		} else if (elements[0].equalsIgnoreCase("Diamond")) {
-			System.out.println(this + " >> DIAMOND");
+			//System.out.println(this + " >> DIAMOND");
 			if (elements.length != 3) {
 				throw new IllegalArgumentException("Illegal boolean combination; <Diamond> does not have exactly 2 child elements.");
 			}

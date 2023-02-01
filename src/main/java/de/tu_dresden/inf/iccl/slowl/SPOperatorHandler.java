@@ -92,14 +92,14 @@ public class SPOperatorHandler extends DefaultHandler {
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		
 		if (qName.equalsIgnoreCase("standpointAxiom")) {
-			System.out.println(this + " >> Standoint axiom name: " + spAxiomName);
+			//System.out.println(this + " >> Standoint axiom name: " + spAxiomName);
 		} else if (qName.equalsIgnoreCase("Box") || qName.equalsIgnoreCase("Diamond")) {
 			if (opCount != 1) {
 				throw new SAXException("Number of <Box> or <Diamond> elements must be exactly 1.");
-			} else {
+			} /*else {
 				System.out.print(this + " >> Standpoint names: ");
 				Renderer.printSet(spNames);
-			}
+			}*/
 		} else if (qName.equalsIgnoreCase("Standpoint")) {
 			
 			

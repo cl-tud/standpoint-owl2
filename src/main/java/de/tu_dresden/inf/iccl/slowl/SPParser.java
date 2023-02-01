@@ -149,15 +149,15 @@ public class SPParser {
 		names.remove("*");
 		Iterator<String> it = names.iterator();
 		it.forEachRemaining(next -> spNames.add(next));
-		System.out.print(this + " >> Standpoint names: ");
-		Renderer.printSet(spNames);
+		//System.out.print(this + " >> Standpoint names: ");
+		//Renderer.printSet(spNames);
 		
 		String axiomName = spOperatorHandler.spAxiomName;
 		if (axiomName != null) {
 			spAxiomNames.add(axiomName);
 		}
-		System.out.print(this + " >> Axiom names: ");
-		Renderer.printSet(spAxiomNames);
+		//System.out.print(this + " >> Axiom names: ");
+		//Renderer.printSet(spAxiomNames);
 	}
 	
 	/**
@@ -215,7 +215,7 @@ public class SPParser {
 			}
 		}
 		
-		System.out.println(this + " >> Diamonds counted: " + diamondCount);
+		//System.out.println(this + " >> Diamonds counted: " + diamondCount);
 	}
 	
 	public void countDiamonds() throws IllegalArgumentException {
@@ -383,11 +383,11 @@ public class SPParser {
 			it.forEachRemaining(next -> spNames.add(next));
 		}
 		
-		System.out.print(this + " >> Standpoint names: ");
-		Renderer.printSet(spNames);
+		//System.out.print(this + " >> Standpoint names: ");
+		//Renderer.printSet(spNames);
 		
-		System.out.print(this + " >> Axiom names: ");
-		Renderer.printSet(spAxiomNames);
+		//System.out.print(this + " >> Axiom names: ");
+		//Renderer.printSet(spAxiomNames);
 	}
 	
 	public void getNames() {
@@ -549,8 +549,8 @@ public class SPParser {
 		// remove universal standpoint (*) from set of standpoint names
 		spNames.remove("*");
 		
-		System.out.print(this + " >> Axiom names: ");
-		Renderer.printSet(spAxiomNames);
+		//System.out.print(this + " >> Axiom names: ");
+		//Renderer.printSet(spAxiomNames);
 	}
 	
 	public void parseAxioms() {
@@ -585,8 +585,8 @@ public class SPParser {
 			}
 		}
 		
-		System.out.print(this + " >> Axiom names: ");
-		Renderer.printSet(spAxiomNames);
+		//System.out.print(this + " >> Axiom names: ");
+		//Renderer.printSet(spAxiomNames);
 	}
 	
 	public String getFirstSPName(String spExpr) {
@@ -668,8 +668,8 @@ public class SPParser {
 			it.forEachRemaining(next -> spNames.add(next));
 		}
 		
-		System.out.print(this + " >> Standpoint names: ");
-		Renderer.printSet(spNames);
+		//System.out.print(this + " >> Standpoint names: ");
+		//Renderer.printSet(spNames);
 	}
 	
 	public void getSPNames() {
@@ -704,8 +704,8 @@ public class SPParser {
 			it.forEachRemaining(next -> spNames.add(next));
 		}
 		
-		System.out.print(this + " >> Standpoint names: ");
-		Renderer.printSet(spNames);
+		//System.out.print(this + " >> Standpoint names: ");
+		//Renderer.printSet(spNames);
 	}
 
 	public Set<OWLEquivalentClassesAxiom> getAnnotatedEquivalentClassesAxioms() {
@@ -718,7 +718,7 @@ public class SPParser {
 				annotations = a.getAnnotations(initLabel);
 				if (!annotations.isEmpty()) {
 					if (annotations.size() > 1) {
-						System.out.println("Multiple standpointLabels for " + a + ".");
+						System.out.println(this + " >> SKIP: Multiple standpointLabels for " + a + ".");
 						continue;
 					}
 					axiom = a.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
@@ -742,7 +742,7 @@ public class SPParser {
 				annotations = a.getAnnotations(initLabel);
 				if (!annotations.isEmpty()) {
 					if (annotations.size() > 1) {
-						System.out.println("Multiple standpointLabels for " + a + ".");
+						System.out.println(this + " >> SKIP: Multiple standpointLabels for " + a + ".");
 						continue;
 					}
 					axiom = a.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
@@ -788,7 +788,7 @@ public class SPParser {
 			annotations = a.getAnnotations(label);
 			if (!annotations.isEmpty()) {
 				if (annotations.size() > 1) {
-					System.out.println("Multiple standpointLabels for " + a + ".");
+					System.out.println("SPParser >> SKIP: Multiple standpointLabels for " + a + ".");
 					continue;
 				}
 				axiom = a.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
@@ -817,7 +817,7 @@ public class SPParser {
 			annotations = a.getAnnotations(label);
 			if (!annotations.isEmpty()) {
 				if (annotations.size() > 1) {
-					System.out.println("Multiple standpointLabels for " + a + ".");
+					System.out.println("SPParser >> SKIP: Multiple standpointLabels for " + a + ".");
 					continue;
 				}
 				axiom = a.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
@@ -875,7 +875,7 @@ public class SPParser {
 				}
 			}
 		} else {
-			System.out.println("Standpoint labels on axiom type " + axiomType + " not supported.");
+			System.out.println("SPParser >> ERROR: Standpoint labels on axiom type " + axiomType + " not supported.");
 		}
 		
 		return annotationSet;	

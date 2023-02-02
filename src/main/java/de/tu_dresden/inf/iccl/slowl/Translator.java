@@ -1,6 +1,7 @@
 package de.tu_dresden.inf.iccl.slowl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.function.Predicate;
@@ -14,6 +15,7 @@ import org.semanticweb.owlapi.expression.OWLEntityChecker;
 import org.semanticweb.owlapi.expression.ShortFormEntityChecker;
 import org.semanticweb.owlapi.io.OWLParserException;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.ClassExpressionType;
 import org.semanticweb.owlapi.model.IRI;
@@ -30,6 +32,7 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSameIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.parameters.ChangeApplied;
@@ -68,6 +71,7 @@ public class Translator {
 	private IRI outputOntologyIRI;
 	private SimpleShortFormProvider shortFormProvider = new SimpleShortFormProvider();
 	private OWLEntityChecker checker;
+	private File outputFile;
 	
 	// universal role
 	private OWLObjectProperty u;
@@ -94,6 +98,8 @@ public class Translator {
 			outputOntologyIRI = IRI.create(outputOntologyIRIString);
 			
 			outputOntology = manager.createOntology(outputOntologyIRI); // throws OWLOntologyCreationException
+			
+			setOutputFile(new File(f.getParent().replace(File.separator, "/") + "/" + removeFileExtension(f.getName()) + "_trans.owl"));
 			
 			manchesterParser.setDefaultOntology(ontology);
 			checker = new ShortFormEntityChecker(new BidirectionalShortFormProviderAdapter(manager, Set.of(ontology), shortFormProvider));
@@ -134,8 +140,9 @@ public class Translator {
 		}
 	}
 	
-	public void setOutputFile(String filename) {
+	public void setOutputFile(File f) {
 		// set file extension to .owl
+		String filename = f.getName();
 		int k = filename.lastIndexOf(".");
 		if (k > 0) {
 			if (filename.indexOf(".owl", k) < 0) {
@@ -145,13 +152,29 @@ public class Translator {
 			filename = filename + ".owl";
 		}
 		
-		// create OutputStream
-		try {
-			out = new FileOutputStream(filename);
-		} catch (Exception e) {
-			e.printStackTrace();
-			// default OutputStream ?
+		outputFile = new File(f.getParent().replace(File.separator, "/") + "/" + filename);
+		System.out.println(this + " >> " + outputFile);
+	}
+	
+	public void saveOutputOntology() {
+		if (outputOntology == null) {
+			System.out.println(this + " >> ERROR: Output ontology is null.");
+			return;
+		} else if (outputOntology.isEmpty()) {
+			System.out.println(this + " >> WARNING: Output ontology is empty.");
 		}
+		
+		try {
+			manager.saveOntology(outputOntology, new OWLXMLDocumentFormat(), new FileOutputStream(outputFile));
+		} catch (FileNotFoundException e) {
+			System.out.println(this + " >> ERROR: Output file " + outputFile + " not found.");
+			return;
+		} catch (OWLOntologyStorageException e) {
+			System.out.println(this + " >> ERROR: Could not save output ontology. " + e.getMessage());
+			return;
+		}
+		
+		System.out.println(this + " >> Saved output ontology as \"" + outputFile.getName() + "\".");
 	}
 	
 	/**
@@ -223,6 +246,7 @@ public class Translator {
 		}
 		
 		Set<OWLSubClassOfAxiom> translatedAxioms = new HashSet<OWLSubClassOfAxiom>();
+		int skipCount = 0;
 		OWLClassExpression expr;
 		
 		// translate normal (non-standpoint) axioms
@@ -235,6 +259,7 @@ public class Translator {
 					expr = transPos(i, ax);
 				} catch (IllegalArgumentException e) {
 					System.out.println(this + " >> SKIP: Could not translate ABox axiom.\n" + e.getMessage());
+					skipCount++;
 					continue forABox;
 				}
 				translatedAxioms.add(dataFactory.getOWLSubClassOfAxiom(dataFactory.getOWLThing(), expr));
@@ -250,7 +275,8 @@ public class Translator {
 				try {
 					expr = trans(i, ax);
 				} catch (IllegalArgumentException e) {
-					System.out.println(this + " >> SKIP: Could not translate standpoint axiom.\n" + e.getMessage());
+					System.out.println(this + " >> SKIP: Could not translate standpoint axiom. " + e.getMessage());
+					skipCount++;
 					continue forSP;
 				}
 				translatedAxioms.add(dataFactory.getOWLSubClassOfAxiom(dataFactory.getOWLThing(), expr));
@@ -276,7 +302,7 @@ public class Translator {
 		}
 		
 		axiomCount = outputOntology.getAxiomCount(Imports.EXCLUDED);
-		System.out.println(this + " >> Added " + axiomCount + " axioms to output ontology.");
+		System.out.println(this + " >> Added " + axiomCount + " axiom(s) to output ontology. Skipped " + skipCount + " axiom(s) in translation.");
 	}
 	
 	/**
@@ -441,6 +467,7 @@ public class Translator {
 			for (String e : elements) {
 				System.out.print(e + ", ");
 			}
+			System.out.println();
 			throw new IllegalArgumentException("Illegal boolean combination; unexpected number of child elements.");
 		}
 		
@@ -813,5 +840,14 @@ public class Translator {
 			throw new IllegalArgumentException("Anonymous individual cannot be rebased.");
 		}
 		return dataFactory.getOWLNamedIndividual(IRI.create(outputOntologyIRIString + "#" + individualName));
+	}
+	
+	private String removeFileExtension(String filename) {
+		int i = filename.lastIndexOf(".");
+		if (i > 0) {
+			return filename.substring(0, i);
+		} else {
+			return filename;
+		}
 	}
 }

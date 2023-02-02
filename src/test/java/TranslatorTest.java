@@ -167,6 +167,33 @@ public class TranslatorTest {
 	}
 	
 	@Test
+	public void givenOntology_whenTranslateOntologyAndSaveOutputOntology_thenAddAxiomsToOutputOntologyAndSaveToFile() {
+		final File f = new File("./src/test/SPTest.owl");
+		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+		OWLDataFactory dataFactory = manager.getOWLDataFactory();
+		
+		OWLOntology ontology = null;
+		try {
+			ontology = manager.loadOntologyFromOntologyDocument(f);
+		} catch (OWLOntologyCreationException e) {
+			e.printStackTrace();
+			fail("Ontology test file " + f.getName() + " does not exist.");
+		}
+		
+		Translator translator;
+		try {
+			translator = new Translator(f);
+		} catch (Exception e) {
+			fail("Test incorrectly implemented.");
+			return;
+		}
+		
+		translator.translateOntology();
+		//System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> " + translator.outputOntology);
+		translator.saveOutputOntology();
+	}
+	
+	@Test
 	public void givenSPExpression_whenTransExpr_thenReturnOWLClassExpression() {
 		/* Here, the test file is only used for the initialisation of the Translator;
 		 * test does not depend on specific standpointLabels.

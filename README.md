@@ -1,5 +1,7 @@
 # Standpoint-Reasoning Plugin for Protégé
 
+**NOTE: The plugin has been discontinued for now. Please use the command-line tool from branch "standalone".**
+
 ## Description
 A reasoner plugin for Protégé 5.0 implementing standpoint reasoning.
 The goal is to write a reasoner plugin which acts as a wrapper for a usual DL reasoner (e.g. HermiT). It should parse special annotation properties simulating the syntax of standpoint logic, translate them to standard SROIQ,

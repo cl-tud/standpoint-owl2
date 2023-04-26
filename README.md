@@ -1,6 +1,6 @@
 # Standpoint-Reasoning Plugin for Protégé
 
-**NOTE: The plugin has been discontinued for now. Please use the command-line tool from branch "standalone".**
+**NOTE: The plugin has been discontinued for now. Please use the command-line tool from the main branch.**
 
 ## Description
 A reasoner plugin for Protégé 5.0 implementing standpoint reasoning.

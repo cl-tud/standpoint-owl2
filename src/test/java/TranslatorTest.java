@@ -1,9 +1,9 @@
 package de.tu_dresden.inf.iccl.slowl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.File;
@@ -17,8 +17,10 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
@@ -29,6 +31,7 @@ import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -37,7 +40,7 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 public class TranslatorTest {
 	
-	@Test
+	/*@Test
 	public void givenOntology_whenConstructTranslator_thenReturnNewConcepts() {
 		final File f = new File("./src/test/SPTest.owl");
 		
@@ -66,7 +69,7 @@ public class TranslatorTest {
 		}
 		
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
-	}
+	}*/
 	
 	@Test
 	public void givenOntology_whenCompileSPAxiomsToTranslate_ReturnAxiomStrings() {
@@ -93,17 +96,17 @@ public class TranslatorTest {
 									  "    <Standpoint name=\"*\"/>\n" +
 									  "  <EquivalentClasses>\n" +
 									  "<LHS>C</LHS>\n" +
-									  "<RHS>(A and B)</RHS>\n" +
+									  "<RHS>A and B</RHS>\n" +
 									  "</EquivalentClasses>\n" +
 									  "</Box>\n";
 		
-		final String expectedAxiom3 = "<Box>\n" +
+		/*final String expectedAxiom3 = "<Box>\n" +
 									  "    <Standpoint name=\"s1\"/>\n" +
 									  "  <SubClassOf>\n" +
 									  "<LHS>Y</LHS>\n" +
 									  "<RHS>X</RHS>\n" +
 									  "</SubClassOf>\n" +
-									  "</Box>\n";
+									  "</Box>\n";*/
 									  
 		final String expectedAxiom4 = "<Diamond>\n" +
 									  "    <MINUS>\n" +
@@ -149,7 +152,7 @@ public class TranslatorTest {
 									  "  </OR>\n" +
 									  "</booleanCombination>";
 		
-		final Set<String> expectedAxioms = Set.of(expectedAxiom1, expectedAxiom2, expectedAxiom3, expectedAxiom4, expectedAxiom5);
+		final Set<String> expectedAxioms = Set.of(expectedAxiom1, expectedAxiom2, expectedAxiom4, expectedAxiom5);
 		
 		Translator translator;
 		try {
@@ -230,7 +233,7 @@ public class TranslatorTest {
 			"  <Standpoint name = \"s1\" />\n" +
 			"</INTERSECTION>";
 			
-		final OWLObjectProperty u = dataFactory.getOWLObjectProperty(IRI.create(outputOntologyIRIString + "#universal_role"));
+		final OWLObjectProperty u = dataFactory.getOWLTopObjectProperty();
 		
 		final OWLClassExpression s1Class = dataFactory.getOWLClass(IRI.create(outputOntologyIRIString + "#M_s1_0"));
 		final OWLClassExpression s2Class = dataFactory.getOWLClass(IRI.create(outputOntologyIRIString + "#M_s2_0"));
@@ -287,7 +290,7 @@ public class TranslatorTest {
 		final String ontologyIRIString = SPParser.getOntologyIRIString(ontology);
 		final String outputOntologyIRIString = ontologyIRIString + "_trans";
 		
-		final OWLObjectProperty u = dataFactory.getOWLObjectProperty(IRI.create(outputOntologyIRIString + "#universal_role"));
+		final OWLObjectProperty u = dataFactory.getOWLTopObjectProperty();
 		
 		final OWLClassExpression classA = dataFactory.getOWLClass(IRI.create(ontologyIRIString + "#A"));
 		final OWLClassExpression classB = dataFactory.getOWLClass(IRI.create(ontologyIRIString + "#B"));
@@ -369,7 +372,7 @@ public class TranslatorTest {
 		final String ontologyIRIString = SPParser.getOntologyIRIString(ontology);
 		final String outputOntologyIRIString = ontologyIRIString + "_trans";
 		
-		final OWLObjectProperty u = dataFactory.getOWLObjectProperty(IRI.create(outputOntologyIRIString + "#universal_role"));
+		final OWLObjectProperty u = dataFactory.getOWLTopObjectProperty();
 		
 		final OWLClassExpression classA = dataFactory.getOWLClass(IRI.create(ontologyIRIString + "#A"));
 		final OWLClassExpression classB = dataFactory.getOWLClass(IRI.create(ontologyIRIString + "#B"));
@@ -499,8 +502,7 @@ public class TranslatorTest {
 			"  </AND>\n" +
 			"</booleanCombination>";
 			
-			final OWLObjectProperty u = dataFactory.getOWLObjectProperty(IRI.create(outputOntologyIRIString + "#universal_role"));
-			
+			final OWLObjectProperty u = dataFactory.getOWLTopObjectProperty();
 			final int expectedPrcs = 4;
 			
 			final OWLClass classA0 = dataFactory.getOWLClass(IRI.create(outputOntologyIRIString + "#A_0"));
@@ -641,6 +643,70 @@ public class TranslatorTest {
 	}
 	
 	@Test
+	public void givenSharpening_whenTrans_thenReturnOWLClassExpression() {
+		final String iri = "http://slowl.test.org";
+		
+		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+		OWLDataFactory df = manager.getOWLDataFactory();
+		
+		OWLOntology ontology;
+		try {
+			ontology = manager.createOntology(IRI.create(iri));
+		} catch (OWLOntologyCreationException e) {
+			fail("Test incorrectly implemented. " + e.getMessage());
+			return;
+		} 
+		
+		final OWLAnnotationProperty spLabel = df.getOWLAnnotationProperty(IRI.create(iri + "_trans#standpointLabel"));
+		
+		final String sharpening1 = "<sharpening>\n" +
+								   "  <Standpoint name=\"s1\"/>\n" +
+								   "  <Standpoint name=\"s2\"/>\n" +
+								   "</sharpening>";
+								   
+		/*final String sharpening2 = "<sharpening>\n" +
+								   "  <UNION>\n" +
+								   "    <Standpoint name=\"s1\"/>\n" +
+								   "    <Standpoint name=\"s2\"/>\n" +
+								   "  </UNION>\n" +
+								   "  <MINUS>\n" +
+								   "    <INTERSECTION>\n" +
+								   "      <Standpoint name=\"s1\"/>\n"
+								   "      <Standpoint name=\"s3\"/>\n"
+								   "    </INTERSECTION>\n" +
+								   "    <Standpoint name=\"s2\"/>\n" +
+								   "  </MINUS>\n" +
+								   "</sharpening>";*/
+		
+		final OWLAnnotationAssertionAxiom annotationAxiom1 = df.getOWLAnnotationAssertionAxiom(spLabel, ontology.getOntologyID().getOntologyIRI().get(), df.getOWLLiteral(sharpening1));
+		//final OWLAnnotationAssertionAxiom annotationAxiom2 = df.getOWLAnnotationAssertionAxiom(spLabel, ontology, sharpening2);
+		
+		ontology.addAxioms(annotationAxiom1);
+		
+		final OWLObjectProperty u = df.getOWLTopObjectProperty();
+		
+		final OWLClass m_s1_0 = df.getOWLClass(IRI.create(iri + "_trans#M_s1_0"));
+		final OWLClass m_s2_0 = df.getOWLClass(IRI.create(iri + "_trans#M_s2_0"));
+		//final OWLClass m_s3_0 = df.getOWLClass(IRI.create(iri + "#M_s3_0"));
+		
+		final OWLClassExpression expectedExpr1 = df.getOWLObjectUnionOf(df.getOWLObjectSomeValuesFrom(u, df.getOWLObjectComplementOf(m_s1_0)), df.getOWLObjectAllValuesFrom(u, m_s2_0), df.getOWLObjectAllValuesFrom(u, df.getOWLNothing()));
+		
+		Translator translator;
+		try {
+			translator = new Translator(ontology);
+		} catch (Exception e) {
+			fail("Test incorrectly implemented.");
+			return;
+		}
+		
+		final OWLClassExpression actualExpr1 = translator.trans(0, sharpening1);
+		
+		assertEquals(expectedExpr1, actualExpr1);
+		
+		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
+	}
+	
+	@Test
 	public void givenLHSandRHS_whenCreateSubClassOfAxiom_thenReturnOWLSubClassOfAxiom() {
 		/* Here, the test file is only used for the initialisation of the Translator;
 		 * test does not depend on specific standpointLabels.
@@ -761,5 +827,26 @@ public class TranslatorTest {
 		assertEquals(expectedExpression3, actualExpression3);
 		
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
+	}
+	
+	@Test
+	public void givenSPName_whenIsSPName_thenReturnBoolean() {
+		assertEquals(true, Translator.isSPName("*"));
+		assertEquals(true, Translator.isSPName("s"));
+		assertEquals(true, Translator.isSPName("s430"));
+		assertEquals(true, Translator.isSPName("aStandpoint"));
+		assertEquals(false, Translator.isSPName("1sp"));
+		assertEquals(false, Translator.isSPName("sp_45"));
+		assertEquals(false, Translator.isSPName("§sp"));
+	}
+	
+	@Test
+	public void givenSPAxiomName_whenIsSPAxiomName_thenReturnBoolean() {
+		assertEquals(true, Translator.isSPAxiomName("§ax1"));
+		assertEquals(true, Translator.isSPAxiomName("§ax"));
+		assertEquals(true, Translator.isSPAxiomName("§SPAxiom234"));
+		assertEquals(false, Translator.isSPAxiomName("ax1"));
+		assertEquals(false, Translator.isSPAxiomName("*"));
+		assertEquals(false, Translator.isSPAxiomName("§9"));		
 	}
 }

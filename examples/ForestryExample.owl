@@ -1,0 +1,313 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#"
+     xml:base="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample">
+        <standpointLabel>&lt;booleanCombination&gt;
+  &lt;AND&gt;
+    &lt;standpointAxiom name=&quot;§F31&quot;/&gt;
+    &lt;standpointAxiom name=&quot;§F32&quot;/&gt;
+  &lt;/AND&gt;
+&lt;/booleanCombination&gt;</standpointLabel>
+        <standpointLabel>&lt;booleanCombination&gt;
+  &lt;Box&gt;
+    &lt;Standpoint name=&quot;BFO&quot;/&gt;
+    &lt;SubClassOf&gt;
+      &lt;LHS&gt;Land and Ecosystem&lt;/LHS&gt;
+      &lt;RHS&gt;owl:Nothing&lt;/RHS&gt;
+    &lt;/SubClassOf&gt;
+  &lt;/Box&gt;
+&lt;/booleanCombination&gt;</standpointLabel>
+        <standpointLabel>&lt;booleanCombination&gt;
+  &lt;Box&gt;
+    &lt;UNION&gt;
+      &lt;Standpoint name=&quot;LC&quot;/&gt;
+      &lt;Standpoint name=&quot;LU&quot;/&gt;
+    &lt;/UNION&gt;
+    &lt;SubClassOf&gt;
+      &lt;LHS&gt;BroadleafForest or NeedleleafForest or TropicalForest&lt;/LHS&gt;
+      &lt;RHS&gt;Forest&lt;/RHS&gt;
+    &lt;/SubClassOf&gt;
+  &lt;/Box&gt;
+&lt;/booleanCombination&gt;</standpointLabel>
+        <standpointLabel>&lt;sharpening&gt;
+  &lt;Standpoint name=&quot;LC&quot;/&gt;
+  &lt;Standpoint name=&quot;BFO&quot;/&gt;
+&lt;/sharpening&gt;</standpointLabel>
+        <standpointLabel>&lt;sharpening&gt;
+  &lt;Standpoint name=&quot;LU&quot;/&gt;
+  &lt;Standpoint name=&quot;BFO&quot;/&gt;
+&lt;/sharpening&gt;</standpointLabel>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#standpointLabel -->
+
+    <owl:AnnotationProperty rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#standpointLabel"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#hasLand -->
+
+    <owl:ObjectProperty rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#hasLand"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#in -->
+
+    <owl:ObjectProperty rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#in">
+        <owl:propertyChainAxiom rdf:parseType="Collection">
+            <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#hasLand"/>
+            <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#in"/>
+        </owl:propertyChainAxiom>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#AreaGEqZeroPointFive -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#AreaGEqZeroPointFive"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#BroadleafForest -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#BroadleafForest"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#City -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#City"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Ecosystem -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Ecosystem"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Forest -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Forest">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestEcosystem"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#hasLand"/>
+                        <owl:someValuesFrom rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#AreaGEqZeroPointFive"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestlandUse"/>
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#MCON"/>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Forest"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/2002/07/owl#equivalentClass"/>
+        <owl:annotatedTarget>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestlandUse"/>
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#MCON"/>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:annotatedTarget>
+        <standpointLabel>&lt;standpointAxiom name=&quot;§F31&quot;&gt;
+&lt;Box&gt;
+  &lt;Standpoint name=&quot;LU&quot;/&gt;
+&lt;/Box&gt;
+&lt;/standpointAxiom&gt;</standpointLabel>
+    </owl:Axiom>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Forest"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/2002/07/owl#equivalentClass"/>
+        <owl:annotatedTarget>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestEcosystem"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#hasLand"/>
+                        <owl:someValuesFrom rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#AreaGEqZeroPointFive"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:annotatedTarget>
+        <standpointLabel>&lt;standpointAxiom&gt;
+  &lt;Box&gt;
+    &lt;Standpoint name=&quot;LC&quot;/&gt;
+  &lt;/Box&gt;
+&lt;/standpointAxiom&gt;</standpointLabel>
+    </owl:Axiom>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestEcosystem -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestEcosystem">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Ecosystem"/>
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#TreeCanopyGEqZeroPointTwo"/>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestEcosystem"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/2002/07/owl#equivalentClass"/>
+        <owl:annotatedTarget>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Ecosystem"/>
+                    <rdf:Description rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#TreeCanopyGEqZeroPointTwo"/>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:annotatedTarget>
+        <standpointLabel>&lt;standpointAxiom&gt;
+  &lt;Box&gt;
+    &lt;Standpoint name=&quot;LC&quot;/&gt;
+  &lt;/Box&gt;
+&lt;/standpointAxiom&gt;</standpointLabel>
+    </owl:Axiom>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestlandUse -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestlandUse">
+        <rdfs:subClassOf rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Land"/>
+    </owl:Class>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestlandUse"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#subClassOf"/>
+        <owl:annotatedTarget rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Land"/>
+        <standpointLabel>&lt;standpointAxiom name=&quot;§F32&quot;&gt;
+  &lt;Box&gt;
+    &lt;Standpoint name=&quot;*&quot;/&gt;
+  &lt;/Box&gt;
+&lt;/standpointAxiom&gt;</standpointLabel>
+    </owl:Axiom>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Land -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#Land"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#MCON -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#MCON"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#NeedleleafForest -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#NeedleleafForest"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#TreeCanopyGEqZeroPointTwo -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#TreeCanopyGEqZeroPointTwo"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#TropicalForest -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#TropicalForest"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#c -->
+
+    <owl:NamedIndividual rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#c">
+        <rdf:type rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#City"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#e -->
+
+    <owl:NamedIndividual rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#e">
+        <rdf:type rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestEcosystem"/>
+        <hasLand rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#l"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#l -->
+
+    <owl:NamedIndividual rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#l">
+        <rdf:type rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#AreaGEqZeroPointFive"/>
+        <rdf:type rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#ForestlandUse"/>
+        <rdf:type rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#MCON"/>
+        <in rdf:resource="http://de.tu-dresden.inf.iccl.slowl/Examples/ForestryExample#c"/>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+

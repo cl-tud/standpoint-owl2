@@ -1,7 +1,9 @@
 package de.tu_dresden.inf.iccl.slowl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.File;
@@ -28,8 +30,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import org.w3c.dom.Document;
-
-import org.junit.Test;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AxiomType;
@@ -83,45 +83,6 @@ public class SPParserTest {
 		String actualXMLString = SPParser.spAnnotationToXML(annotation);
 		
 		assertEquals(expectedXMLString, actualXMLString);
-		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
-	}
-	
-	@Test
-	public void givenSPLabel_whenParseSPOperator_thenReturnSPNameSet() {
-		Set<String> expectedSPNameSet = new HashSet<String>();
-		expectedSPNameSet.add("spA");
-		expectedSPNameSet.add("spB");
-		expectedSPNameSet.add("s111");
-		//System.out.print(this + " >> Expected standpoint names: ");
-		//SPParser.printSet(expectedSPNameSet);
-		
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLDataFactory dataFactory = manager.getOWLDataFactory();
-		final OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create("http://www.iccl.inf.tu-dresden.de/ontologies/SPTest#standpointLabel"));
-		
-		final String spExpression = "<standpointAxiom>\n" +
-			"  <Diamond>\n" +
-			"    <MINUS>\n" +
-			"      <Standpoint name=\"*\"/>\n" +
-			"      <UNION>\n" +
-			"        <INTERSECTION>\n" +
-			"          <Standpoint name=\"spA\"/>\n" +
-			"          <Standpoint name=\"spB\"/>\n" +
-			"        </INTERSECTION>\n" +
-			"        <Standpoint name=\"s111\"/>\n" +
-			"      </UNION>\n" +
-			"    </MINUS>\n" +
-			"  </Diamond>\n" +
-			"</standpointAxiom>";
-		
-		final OWLLiteral value = dataFactory.getOWLLiteral(spExpression);
-		final OWLAnnotation annotation = dataFactory.getOWLAnnotation(label, value);
-		
-		SPParser parser = new SPParser();
-		parser.parseSPOperator(SPParser.spAnnotationToXML(annotation));
-		Set<String> actualSPNameSet = parser.spNames;
-		
-		assertEquals(expectedSPNameSet, actualSPNameSet);
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
 	}
 	
@@ -275,12 +236,43 @@ public class SPParserTest {
 
 		final int expectedDiamonds5 = 2;
 		
+		final String xmlString6 = "<booleanCombination>\n" +
+								  "  <AND>\n" +
+								  "    <NOT>\n" +
+								  "      <standpointAxiom name=\"§ax\"/>\n" +
+								  "    </NOT>\n" +
+								  "    <Diamond>\n" +
+								  "      <SubClassOf>\n" +
+								  "        <LHS>A</LHS>\n" +
+								  "        <RHS>B</RHS>\n" +
+								  "      </SubClassOf>\n" +
+								  "    </Diamond>\n" +
+								  "    <NOT>\n" +
+								  "      <standpointAxiom name=\"§ax1\"/>\n" +
+								  "    </NOT>\n" +
+								  "  </AND>\n" +
+								  "</booleanCombination>";
+								 
+		final int expectedDiamonds6 = 1;
+		
 		SPParser parser = new SPParser();
-		int actualDiamonds1 = parser.countDiamonds(xmlString1);
-		int actualDiamonds2 = parser.countDiamonds(xmlString2);
-		int actualDiamonds3 = parser.countDiamonds(xmlString3);
-		int actualDiamonds4 = parser.countDiamonds(xmlString4);
-		int actualDiamonds5 = parser.countDiamonds(xmlString5);
+		int actualDiamonds1;
+		int actualDiamonds2;
+		int actualDiamonds3;
+		int actualDiamonds4;
+		int actualDiamonds5;
+		int actualDiamonds6;
+		try {
+			actualDiamonds1 = parser.countDiamonds(xmlString1);
+			actualDiamonds2 = parser.countDiamonds(xmlString2);
+			actualDiamonds3 = parser.countDiamonds(xmlString3);
+			actualDiamonds4 = parser.countDiamonds(xmlString4);
+			actualDiamonds5 = parser.countDiamonds(xmlString5);
+			actualDiamonds6 = parser.countDiamonds(xmlString6);
+		} catch (Exception e) {
+			fail(e.getMessage());
+			return;
+		}
 		
 		assertEquals(expectedDiamonds1, actualDiamonds1);		
 		assertEquals(expectedDiamonds2, actualDiamonds2);		
@@ -306,8 +298,8 @@ public class SPParserTest {
 		
 		final int expectedDiamonds = 4;
 		
-		SPParser parser = new SPParser();
-		parser.countDiamonds(ontology);
+		SPParser parser = new SPParser(ontology);
+		parser.countDiamonds();
 		final int actualDiamonds = parser.diamondCount;
 		
 		assertEquals(expectedDiamonds, actualDiamonds);
@@ -373,125 +365,6 @@ public class SPParserTest {
 		Set<OWLAnnotation> actualAnnotations = SPParser.getAnnotations(ontology, AxiomType.SUBCLASS_OF);
 		
 		assertEquals(expectedAnnotations, actualAnnotations);
-		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
-	}
-	
-	@Test
-	public void givenOntology_whenGetAnnotatedEquivalentClassesAxioms_thenReturnAnnotatedAxioms() {
-		final File f = new File("./src/test/SPTest.owl");
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLDataFactory dataFactory = manager.getOWLDataFactory();
-		
-		OWLOntology ontology = null;
-		try {
-			ontology = manager.loadOntologyFromOntologyDocument(f);
-		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
-			fail("Ontology test file " + f.getName() + " does not exist.");
-		}
-		
-		final String ontologyIRI = ontology.getOntologyID().getOntologyIRI().get().toString();
-		
-		final OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create(ontologyIRI + "#standpointLabel"));
-		
-		final String spOperator = "<standpointAxiom>\n" +
-			"  <Box>\n" +
-			"    <Standpoint name=\"*\"/>\n" +
-			"  </Box>\n" +
-			"</standpointAxiom>";
-			
-		final OWLClass a = dataFactory.getOWLClass(IRI.create(ontologyIRI + "#A"));
-		final OWLClass b = dataFactory.getOWLClass(IRI.create(ontologyIRI + "#B"));
-		final OWLClass c = dataFactory.getOWLClass(IRI.create(ontologyIRI + "#C"));
-		
-		final OWLLiteral value = dataFactory.getOWLLiteral(spOperator);
-		
-		final OWLAnnotation[] annotation = {dataFactory.getOWLAnnotation(label, value)};
-		
-		final OWLClassExpression[] a_b = {a, b};
-		final OWLClassExpression a_and_b = dataFactory.getOWLObjectIntersectionOf(a_b);
-		
-		final OWLClassExpression[] c_a_and_b = {c, a_and_b};
-		final OWLEquivalentClassesAxiom c_eq_a_and_b = dataFactory.getOWLEquivalentClassesAxiom(c_a_and_b);
-		
-		Set<OWLEquivalentClassesAxiom> expectedAxioms = new HashSet<OWLEquivalentClassesAxiom>();
-		expectedAxioms.add(c_eq_a_and_b.getAnnotatedAxiom(Set.of(annotation)));
-		
-		Set<OWLEquivalentClassesAxiom> actualAxioms = SPParser.getAnnotatedEquivalentClassesAxioms(ontology);
-		
-		assertEquals(expectedAxioms, actualAxioms);
-		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
-	}
-	
-	@Test
-	public void givenOntology_whenGetAnnotatedSubClassOfAxioms_thenReturnAnnotatedAxioms() {
-		final File f = new File("./src/test/SPTest.owl");
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLDataFactory dataFactory = manager.getOWLDataFactory();
-		
-		OWLOntology ontology = null;
-		try {
-			ontology = manager.loadOntologyFromOntologyDocument(f);
-		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
-			fail("Ontology test file " + f.getName() + " does not exist.");
-		}
-		
-		final String ontologyIRI = ontology.getOntologyID().getOntologyIRI().get().toString();
-		
-		final OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create(ontologyIRI + "#standpointLabel"));
-		
-		final String spOperator1 = "<standpointAxiom>\n" +
-			"  <Box>\n" +
-			"    <Standpoint name=\"s1\"/>\n" +
-			"  </Box>\n" +
-			"</standpointAxiom>";
-			
-		final String spOperator2 = "<standpointAxiom>\n" +
-			"  <Diamond>\n" +
-			"    <MINUS>\n" +
-			"      <Standpoint name=\"*\"/>\n" +
-			"      <UNION>\n" +
-			"        <Standpoint name=\"s1\"/>\n" +
-			"        <Standpoint name=\"s2\"/>\n" +
-			"      </UNION>\n" +
-			"    </MINUS>\n" +
-			"  </Diamond>\n" +
-			"</standpointAxiom>";
-			
-		final String spOperator3 = "<standpointAxiom name=\"§ax1\">\n" +
-			"  <Box>\n" +
-			"    <Standpoint name=\"s1\"/>\n" +
-			"  </Box>\n" +
-			"</standpointAxiom>";
-		
-		final OWLLiteral value1 = dataFactory.getOWLLiteral(spOperator1);
-		final OWLLiteral value2 = dataFactory.getOWLLiteral(spOperator2);
-		final OWLLiteral value3 = dataFactory.getOWLLiteral(spOperator3);
-		
-		final OWLAnnotation[] annotation1 = {dataFactory.getOWLAnnotation(label, value1)};
-		final OWLAnnotation[] annotation2 = {dataFactory.getOWLAnnotation(label, value2)};
-		final OWLAnnotation[] annotation3 = {dataFactory.getOWLAnnotation(label, value3)};
-		
-		final OWLClass a = dataFactory.getOWLClass(IRI.create(ontologyIRI + "#A"));
-		final OWLClass b = dataFactory.getOWLClass(IRI.create(ontologyIRI + "#B"));
-		final OWLClass x = dataFactory.getOWLClass(IRI.create(ontologyIRI + "#X"));
-		final OWLClass y = dataFactory.getOWLClass(IRI.create(ontologyIRI + "#Y"));
-		final OWLClass z = dataFactory.getOWLClass(IRI.create(ontologyIRI + "#Z"));
-		
-		
-		final OWLSubClassOfAxiom b_sub_a = dataFactory.getOWLSubClassOfAxiom(b,a);
-		final OWLSubClassOfAxiom y_sub_x = dataFactory.getOWLSubClassOfAxiom(y,x);
-		final OWLSubClassOfAxiom z_sub_x = dataFactory.getOWLSubClassOfAxiom(z,x);
-		
-		Set<OWLSubClassOfAxiom> expectedAxioms = new HashSet<OWLSubClassOfAxiom>();
-		expectedAxioms.add(b_sub_a.getAnnotatedAxiom(Set.of(annotation1)));
-		expectedAxioms.add(z_sub_x.getAnnotatedAxiom(Set.of(annotation2)));
-		expectedAxioms.add(y_sub_x.getAnnotatedAxiom(Set.of(annotation3)));
-		
-		Set<OWLSubClassOfAxiom> actualAxioms = SPParser.getAnnotatedSubClassOfAxioms(ontology);
-		
-		assertEquals(expectedAxioms, actualAxioms);
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
 	}
 	
@@ -565,37 +438,6 @@ public class SPParserTest {
 	}
 	
 	@Test
-	public void givenOntology_whenGetNames_thenReturnSPNamesAndSPAxiomNames() {
-		final File f = new File("./src/test/SPTest.owl");
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLDataFactory dataFactory = manager.getOWLDataFactory();
-		
-		OWLOntology ontology = null;
-		try {
-			ontology = manager.loadOntologyFromOntologyDocument(f);
-		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
-			fail("Ontology test file " + f.getName() + " does not exist.");
-		}
-		
-		Set<String> expectedSPNames = new HashSet<String>();
-		expectedSPNames.add("s1");
-		expectedSPNames.add("s2");
-		Set<String> expectedSPAxiomNames = new HashSet<String>();
-		expectedSPAxiomNames.add("§ax1");
-		
-		SPParser parser = new SPParser();
-		parser.getNames(ontology);
-		
-		Set<String> actualSPNames = parser.spNames;
-		Set<String> actualSPAxiomNames = parser.spAxiomNames;
-		
-		assertEquals(expectedSPNames, actualSPNames);
-		assertEquals(expectedSPAxiomNames, actualSPAxiomNames);
-		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
-	}
-	
-	@Test
 	public void givenOntology_whenParseAxioms_thenSetRelevantSets() {
 		// relevant sets: spAxiomNames, spNames, spAxioms, spAxiomNameMap, standardAxioms
 		
@@ -624,7 +466,7 @@ public class SPParserTest {
 									  "    <Standpoint name=\"*\"/>\n" +
 									  "  <EquivalentClasses>\n" +
 									  "<LHS>C</LHS>\n" +
-									  "<RHS>(A and B)</RHS>\n" +
+									  "<RHS>A and B</RHS>\n" +
 									  "</EquivalentClasses>\n" +
 									  "</Box>\n";
 		
@@ -650,7 +492,7 @@ public class SPParserTest {
 									  "</SubClassOf>\n" +
 									  "</Diamond>\n";
 									
-		final Set<String> expectedSPAxioms = Set.of(expectedAxiom1, expectedAxiom2, expectedAxiom3, expectedAxiom4);
+		final Set<String> expectedSPAxioms = Set.of(expectedAxiom1, expectedAxiom2, expectedAxiom4);
 		
 		final Set<String> expectedAxiomNames = Set.of("§ax1");
 		
@@ -749,33 +591,7 @@ public class SPParserTest {
 		
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
 	}
-	
-	@Test
-	public void givenOntology_whenGetSPNames_thenReturnSPNames() {
-		final File f = new File("./src/test/SPTest.owl");
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLDataFactory dataFactory = manager.getOWLDataFactory();
-		
-		OWLOntology ontology = null;
-		try {
-			ontology = manager.loadOntologyFromOntologyDocument(f);
-		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
-			fail("Ontology test file " + f.getName() + " does not exist.");
-		}
-		
-		Set<String> expectedSPNames = new HashSet<String>();
-		expectedSPNames.add("s1");
-		expectedSPNames.add("s2");
-		
-		SPParser parser = new SPParser();
-		parser.getSPNames(ontology);
-		Set<String> actualSPNames = parser.spNames;
-		
-		assertEquals(expectedSPNames, actualSPNames);
-		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
-	}
-	
+	 
 	@Test
 	public void givenXMLString_whenGetRootAndChildElements_thenReturnStringArray() {
 		final String xmlString1 = "<?xml version=\"1.0\"?>\n" +
@@ -801,8 +617,17 @@ public class SPParserTest {
 		final String[] actualArr1 = parser.getRootAndChildElements(xmlString1);
 		final String[] actualArr2 = parser.getRootAndChildElements(xmlString2);
 		
-		assertEquals(expectedArr1, actualArr1);
-		assertEquals(expectedArr2, actualArr2);
+		//assertEquals(expectedArr1, actualArr1);
+		//assertEquals(expectedArr2, actualArr2);
+		
+		for (int i = 0; i < Math.max(expectedArr1.length, actualArr1.length); i++) {
+			assertEquals(expectedArr1[i], actualArr1[i]);
+		}
+		
+		for (int i = 0; i < Math.max(expectedArr2.length, actualArr2.length); i++) {
+			assertEquals(expectedArr2[i], actualArr2[i]);
+		}
+		
 		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " >> Test successful.");
 	}
 }

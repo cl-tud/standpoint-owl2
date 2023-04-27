@@ -1,6 +1,7 @@
 package de.tu_dresden.inf.iccl.slowl;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Collection;
@@ -17,15 +18,18 @@ import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import org.w3c.dom.Document;
@@ -54,14 +58,8 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.parameters.Imports;
 
-public class SPParser {
-	
-	// set of AxiomTypes whose annotation by standpointLabels is currently supported
-	public static final Set<AxiomType> supportedSPAxiomTypes = Set.of(AxiomType.SUBCLASS_OF, AxiomType.EQUIVALENT_CLASSES);
-	
-	// set of ABox AxiomTypes which will be considered in the translation
-	public static final Set<AxiomType> supportedABoxAxiomTypes = Set.of(AxiomType.CLASS_ASSERTION, AxiomType.OBJECT_PROPERTY_ASSERTION, AxiomType.SAME_INDIVIDUAL);
-	
+
+public class SPParser {	
 	// standpoint names recorded by the parser instance (without *)
 	Set<String> spNames = new HashSet<String>();
 	
@@ -73,6 +71,9 @@ public class SPParser {
 	
 	// set of ontology axioms as String
 	Set<String> spAxioms = new HashSet<String>();
+	
+	// array of booleanCombinations and sharpening statements as String
+	String[] generalSPStatements;
 	
 	// set of standard (non-standpoint) OWLAxioms
 	Set<OWLAxiom> standardAxioms = new HashSet<OWLAxiom>();
@@ -86,9 +87,14 @@ public class SPParser {
 	private SAXParser saxParser;
 	private XMLReader xmlReader;
 	
+	private Renderer renderer = new Renderer();
+	
 	private DocumentBuilder domBuilder;
 
 	private Transformer transformer;
+	
+	// true if warnings and skip information should be printed
+	private boolean bVerbose;
 	
 	private boolean bInit = false;
 	private OWLOntology initOntology = null;
@@ -97,7 +103,8 @@ public class SPParser {
 	private String initOntologyIRIString;
 	private OWLAnnotationProperty initLabel;
 	
-	public SPParser() {
+	public SPParser(boolean verbose) {
+		bVerbose = verbose;
 		try {
 			saxParser = SAXParserFactory.newInstance().newSAXParser();
 			xmlReader = saxParser.getXMLReader();
@@ -105,12 +112,28 @@ public class SPParser {
 			transformer = TransformerFactory.newInstance().newTransformer();
 			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (SAXException e) {
+			if (bVerbose) {
+				e.printStackTrace();
+			}
+		} catch (ParserConfigurationException e) {
+			if (bVerbose) {
+				e.printStackTrace();
+			}
+		} catch (TransformerConfigurationException e) {
+			if (bVerbose) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
-	public SPParser(OWLOntology ontology) {
+	public SPParser() {
+		this(true);
+	}
+	
+	public SPParser(OWLOntology ontology, boolean verbose) {
+		bVerbose = verbose;
+		
 		bInit = true;
 		initOntology = ontology;
 		initManager = initOntology.getOWLOntologyManager();
@@ -118,6 +141,8 @@ public class SPParser {
 		initOntologyIRIString = getOntologyIRIString(initOntology);
 		initLabel = initDataFactory.getOWLAnnotationProperty(IRI.create(initOntologyIRIString + "#standpointLabel"));
 		
+		generalSPStatements = initOntology.annotations().filter(a -> (a.getProperty().compareTo(initLabel) == 0)).map(a -> spAnnotationToXML(a, false)).toArray(String[]::new);
+		
 		try {
 			saxParser = SAXParserFactory.newInstance().newSAXParser();
 			xmlReader = saxParser.getXMLReader();
@@ -125,46 +150,30 @@ public class SPParser {
 			transformer = TransformerFactory.newInstance().newTransformer();
 			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (SAXException e) {
+			if (bVerbose) {
+				e.printStackTrace();
+			}
+		} catch (ParserConfigurationException e) {
+			if (bVerbose) {
+				e.printStackTrace();
+			}
+		} catch (TransformerConfigurationException e) {
+			if (bVerbose) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
-	/**
-	 * Adds recorded standpoint names and the standpoint axiom name to
-	 * spNames and spAxiomNames, respectively.
-	 */
-	public void parseSPOperator(String spOperator) {
-		SPOperatorHandler spOperatorHandler;
-		try {
-			spOperatorHandler = new SPOperatorHandler();
-			xmlReader.setContentHandler(spOperatorHandler);
-			xmlReader.parse(new InputSource(new StringReader(spOperator)));
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-		
-		Set<String> names = spOperatorHandler.spNames;
-		names.remove("*");
-		Iterator<String> it = names.iterator();
-		it.forEachRemaining(next -> spNames.add(next));
-		//System.out.print(this + " >> Standpoint names: ");
-		//Renderer.printSet(spNames);
-		
-		String axiomName = spOperatorHandler.spAxiomName;
-		if (axiomName != null) {
-			spAxiomNames.add(axiomName);
-		}
-		//System.out.print(this + " >> Axiom names: ");
-		//Renderer.printSet(spAxiomNames);
+	public SPParser(OWLOntology ontology) {
+		this(ontology, true);
 	}
 	
 	/**
 	 * Counts the number of occuring diamonds (and negated boxes) in the
 	 * standpointLabels of the given ontology, and stores it in diamondCount.
 	 */
-	public void countDiamonds(OWLOntology ontology){
+	public void countDiamonds(OWLOntology ontology) {
 		// reset diamondCount
 		diamondCount = 0;
 		
@@ -173,49 +182,63 @@ public class SPParser {
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLDataFactory dataFactory = manager.getOWLDataFactory();
 		OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create(ontologyIRI + "#standpointLabel"));
-		String labelString = label.getIRI().toString();
 		
 		// we first count diamonds in BooleanCombinations
-		Set<OWLAnnotation> ontAnnotations = ontology.getAnnotations();			// cannot give label as argument
-		Set<OWLAnnotation> ontSPAnnotations = new HashSet<OWLAnnotation>();
-		for (OWLAnnotation annotation : ontAnnotations) {
-			// get only standpointLabel Annotations
-			if (annotation.getProperty().getIRI().toString().equals(labelString)) {
-				ontSPAnnotations.add(annotation);
+		for (String s : generalSPStatements) {
+			try {
+				diamondCount = diamondCount + countDiamonds(s);
+			} catch (IllegalArgumentException e) {
+				if (bVerbose) {
+					System.out.println(this + " >> SKIP: Could not count diamonds in boolean combination. " + e.getMessage());
+				}
+				continue;
+			} catch (SAXException e) {
+				if (bVerbose) {
+					System.out.println(this + " >> SKIP: Could not count diamonds in boolean combination. " + e.getMessage());
+				}
+				continue;
 			}
-		}
-		
-		String xmlString = null;
-		for (OWLAnnotation annotation : ontSPAnnotations) {
-			xmlString = spAnnotationToXML(annotation);
-			diamondCount = diamondCount + countDiamonds(xmlString);
 		}
 		
 		// then we count diamonds in standpointLabels of Axioms
 		Set<OWLAnnotation> spAnnotations = getAnnotations(ontology);
-		int m;
-		int n;
 		int k;
-		String xmlStringLower;
+		String xmlString;
+		String name;
 		for (OWLAnnotation annotation : spAnnotations) {
-			xmlString = spAnnotationToXML(annotation);
+			try {
+				xmlString = spAnnotationToXML(annotation); // throws IllegalArgumentException
+			} catch (IllegalArgumentException e) {
+				if (bVerbose) {
+					System.out.println(this + " >> SKIP: Could not count diamonds in standpointLabel annotation. " + e.getMessage());
+				}
+				continue;
+			}
 			
-			// count positive diamonds
-			diamondCount = diamondCount + countDiamonds(xmlString);
+			// count positive diamonds and negated boxes
+			try {
+				diamondCount = diamondCount + countDiamonds(xmlString);
+			} catch (IllegalArgumentException e) {
+				if (bVerbose) {
+					System.out.println(this + " >> SKIP: Could not count diamonds in standpointLabel annotation. " + e.getMessage());
+				}
+				continue;
+			} catch (SAXException e) {
+				if (bVerbose) {
+					System.out.println(this + " >> SKIP: Could not count diamonds in standpointLabel annotation. " + e.getMessage());
+				}
+				continue;
+			}
 			
-			// count boxes that occur negated in some BooleanCombinations
-			xmlStringLower = xmlString.toLowerCase();
-			k = xmlStringLower.indexOf("<box>");
+			// count box operator of each named standpointAxiom which occured in a booleanCombination
+			k = xmlString.toLowerCase().indexOf("<box>");
 			if (k >= 0) {
-				m = xmlStringLower.indexOf("\"", xmlStringLower.indexOf("<standpointaxiom name"));
-				n = xmlStringLower.indexOf("\"", m + 1);
-				if (checkAxiomNames.contains(xmlStringLower.substring(m + 1, n))) {
+				name = getFirstSPAxiomName(xmlString);
+				if (name != null && checkAxiomNames.contains(name)) {
 					diamondCount++;
 				}
 			}
 		}
-		
-		//System.out.println(this + " >> Diamonds counted: " + diamondCount);
 	}
 	
 	public void countDiamonds() throws IllegalArgumentException {
@@ -225,79 +248,18 @@ public class SPParser {
 			throw new IllegalArgumentException("Use method countDiamonds(OWLOntology) if parser has not been initialised with an OWLOntology.");
 		}
 	}
-		
-	/**
-	 * @return number of diamonds (or negated boxes) occuring in
-	 * given XML String.
-	 */
-	int countDiamonds(String s) {
-		s = s.toLowerCase();
-		
-		// return variable
-		int count = 0;
-		
-		// true if current nesting of <NOT> is even
-		boolean bPositive = false;
-		
-		int i = s.indexOf("<not>");
-		int j = s.indexOf("</not>");
-		int next_i;
-		int m;
-		int n;
-		
-		// count <diamond> before first <not> (or all <diamond> if there is no <not>)
-		if (i >= 0) {
-			for (int k = s.indexOf("<diamond>"); (k >= 0 && k < i); k = s.indexOf("<diamond>", k + 1)) {
-				count++;
-			}
-		} else {
-			for (int k = s.indexOf("<diamond>"); (k >= 0); k = s.indexOf("<diamond>", k + 1)) {
-				count++;
-			}
+	
+	int countDiamonds(String xmlString) throws IllegalArgumentException, SAXException {
+		DiamondCounter diamondCounter = new DiamondCounter();
+		XMLReader xmlReader = saxParser.getXMLReader(); // throws SAXException
+		xmlReader.setContentHandler(diamondCounter);
+		try {
+			xmlReader.parse(new InputSource(new StringReader(xmlString))); // throws SAXException
+		} catch (IOException e) {
+			throw new IllegalArgumentException("Could not count diamonds in String. " + e.getMessage());
 		}
-		
-		// count <diamond> between first <not> and last </not>
-		while (i >= 0) {
-			// go through nested <NOT> and negate bPositive every time
-			while (true) {
-				next_i = s.indexOf("<not>", i + 1);
-				if (next_i < 0 || next_i > j) break;
-				bPositive = !bPositive;
-				i = next_i;
-			}
-		
-			// if number of nested <NOT> is even, then we count <Diamond>
-			if (bPositive) {
-				for (int k = s.indexOf("<diamond>", i); (k >= 0 && k < j); k = s.indexOf("<diamond>", k + 1)) {
-					count++;
-				}
-			// if number of nested <NOT> is odd, then we count <Box>
-			} else {
-				for (int k = s.indexOf("<box>", i); (k >= 0 && k < j); k = s.indexOf("<box>", k + 1)) {
-					count++;
-				}
-				for (int k = s.indexOf("<standpointaxiom name", i); (k >= 0 && k < j); k = s.indexOf("<standpointaxiom name", k + 1)) {
-					m = s.indexOf("\"");
-					n = s.indexOf("\"", m + 1);
-					checkAxiomNames.add(s.substring(m + 1, n));
-				}
-			}
-		
-			// move on to next <NOT>
-			i = s.indexOf("<not>", j + 1);
-			j = s.indexOf("</not>", i + 1);
-			bPositive = false;
-		}
-			
-		// count <diamond> after last </not>
-		j = s.lastIndexOf("</not>");
-		if (j >= 0) {
-			for (int k = s.indexOf("<diamond>", j); (k >= 0); k = s.indexOf("<diamond>", k + 1)) {
-					count++;
-				}
-		}
-		
-		return count;
+		checkAxiomNames.addAll(diamondCounter.checkAxiomNames);
+		return diamondCounter.count;
 	}
 	
 	/**
@@ -314,7 +276,9 @@ public class SPParser {
 		
 		Node root = xmlDoc.getFirstChild();
 		if (root.getNodeType() != Node.ELEMENT_NODE) {
-			System.out.println(this + " >> No child elements.");
+			if (bVerbose) {
+				System.out.println(this + " >> No child elements.");
+			}
 			return new String[3];
 		}
 		
@@ -350,56 +314,9 @@ public class SPParser {
 		return rootAndChildElements;
 	}
 	
-	public void getNames(OWLOntology ontology) {
-		// reset spAxiomNames
-		spAxiomNames = new HashSet<String>();
-		
-		// reset spNames
-		spNames = new HashSet<String>();
-		
-		Set<OWLAnnotation> annotations = getAnnotations(ontology);
-		String xmlString = null;
-		Set<String> names = new HashSet<String>();
-		for (OWLAnnotation annotation : annotations) {
-			xmlString = spAnnotationToXML(annotation);
-			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
-			xmlReader.setContentHandler(spOperatorHandler);
-			
-			try {
-				xmlReader.parse(new InputSource(new StringReader(xmlString)));
-			} catch (Exception e) {
-				e.printStackTrace();
-				continue;
-			}
-			
-			String axiomName = spOperatorHandler.spAxiomName;
-			if (axiomName != null) {
-				spAxiomNames.add(axiomName);
-			}
-			
-			names = spOperatorHandler.spNames;
-			names.remove("*");
-			Iterator<String> it = names.iterator();
-			it.forEachRemaining(next -> spNames.add(next));
-		}
-		
-		//System.out.print(this + " >> Standpoint names: ");
-		//Renderer.printSet(spNames);
-		
-		//System.out.print(this + " >> Axiom names: ");
-		//Renderer.printSet(spAxiomNames);
-	}
-	
-	public void getNames() {
-		if (bInit) {
-			getNames(initOntology);
-		} else {
-			throw new IllegalArgumentException("Use method getNames(OWLOntology) if parser has not been initialised with an OWLOntology.");
-		}
-	}
-	
 	/**
-	 * Goes through all axioms of the given ontology, and records their String representation in ontologyAxioms.
+	 * Goes through all axioms of the given ontology, records unannotated axiom in standardAxioms,
+	 * and annotated axioms as their String representation in spAxioms.
 	 * The names of standpointAxioms are recorded in spAxiomNames, and the mapping of standpoint axiom names
 	 * to the corresponding standpoint axiom is recorded in spAxiomNameMap.
 	 * Occuring standpoint names are recorded in spNames.
@@ -443,20 +360,33 @@ public class SPParser {
 		for (OWLSubClassOfAxiom ax : subClassOfAxioms) {
 			axiomPartStart = "<SubClassOf>\n";
 			axiomPartEnd   = "</SubClassOf>\n";
-			axiomPartLHS   = "<LHS>" + Renderer.writeClassExpression(ax.getSubClass()) + "</LHS>\n";
-			axiomPartRHS   = "<RHS>" + Renderer.writeClassExpression(ax.getSuperClass()) + "</RHS>\n";
-			axiomPart 	   = axiomPartStart + axiomPartLHS + axiomPartRHS + axiomPartEnd;
+			
+			try {
+				axiomPartLHS   = "<LHS>" + renderer.writeClassExpression(ax.getSubClass()) + "</LHS>\n";
+				axiomPartRHS   = "<RHS>" + renderer.writeClassExpression(ax.getSuperClass()) + "</RHS>\n";
+			} catch (IllegalArgumentException e) {
+				if (bVerbose) {
+					System.out.println(this + " >> SKIP: Could not write ClassExpression. " + e.getMessage());
+				}
+				continue;
+			}
+			axiomPart = axiomPartStart + axiomPartLHS + axiomPartRHS + axiomPartEnd;
 			
 			annotations = ax.annotations().filter(isSPLabel).toArray(OWLAnnotation[]::new);
 			if (annotations.length > 0) {
+				if (bVerbose && annotations.length > 1) {
+					System.out.println(this + " >> WARNING: Of multiple standpointLabel annotations for SubClassOfAxiom, just one will be considered.");
+				}
 				xmlString = spAnnotationToXML(annotations[0], false);
 				if (xmlString.equals("")) {
-					System.out.println(this + " >> SKIP: standpointLabel of SubClassOfAxiom could not be parsed.");
+					if (bVerbose) {
+						System.out.println(this + " >> SKIP: standpointLabel of SubClassOfAxiom could not be parsed.");
+					}
 					continue;
 				}
 				
 				try {
-					spOperatorHandler = getSPOperatorHandler(saxParser, ax, xmlString);
+					spOperatorHandler = getSPOperatorHandler(saxParser, xmlString);
 				} catch (Exception e) {
 					e.printStackTrace();
 					continue;
@@ -465,17 +395,13 @@ public class SPParser {
 				operatorPart = getOperatorPart(xmlString, spOperatorHandler.operator, axiomPart);
 				
 				spNames.addAll(spOperatorHandler.spNames);
-				spAxioms.add(operatorPart);
 				
 				axiomName = spOperatorHandler.spAxiomName;
 				if (axiomName != null) {
 					spAxiomNames.add(axiomName);
-					try {
-						spAxiomNameMap.put(axiomName, operatorPart);
-					} catch (Exception e) {
-						System.out.println(this + " >> SKIP: Could not set value for " + axiomName + ":\n" + e.getMessage());
-						continue;
-					}
+					spAxiomNameMap.put(axiomName, operatorPart);
+				} else { // do not translate named standpoint axioms outside booleanCombinations
+					spAxioms.add(operatorPart);
 				}
 			} else { // normal SubClassOfAxiom without standpointLabel
 				standardAxioms.add(ax.getAxiomWithoutAnnotations());
@@ -491,13 +417,22 @@ public class SPParser {
 			// might want to add functionality for more than two operands in OWLEquivalentClassesAxiom
 			pairwiseAxioms = ax.asPairwiseAxioms();
 			if (pairwiseAxioms.size() > 1) {
-				System.out.println(this + " >> SKIP: Encountered equivalent classes axiom with more than two operands.");
+				if (bVerbose) {
+					System.out.println(this + " >> SKIP: Encountered equivalent classes axiom with more than two operands.");
+				}
 				continue;
 			}
 				
 			operands = ax.operands().toArray(OWLClassExpression[]::new);
-			axiomPartLHS = "<LHS>" + Renderer.writeClassExpression(operands[0]) + "</LHS>\n";
-			axiomPartRHS = "<RHS>" + Renderer.writeClassExpression(operands[1]) + "</RHS>\n";
+			try {
+				axiomPartLHS = "<LHS>" + renderer.writeClassExpression(operands[0]) + "</LHS>\n";
+				axiomPartRHS = "<RHS>" + renderer.writeClassExpression(operands[1]) + "</RHS>\n";
+			} catch (IllegalArgumentException e) {
+				if (bVerbose) {
+					System.out.println(this + " >> SKIP: Could not write OWLClassExpression. " + e.getMessage());
+				}
+				continue;
+			}
 		
 			axiomPart = axiomPartStart + axiomPartLHS + axiomPartRHS + axiomPartEnd;
 			
@@ -505,12 +440,14 @@ public class SPParser {
 			if (annotations.length > 0) {
 				xmlString = spAnnotationToXML(annotations[0], false);
 				if (xmlString.equals("")) {
-					System.out.println(this + " >> SKIP: standpointLabel of EquivalentClassesAxiom could not be parsed.");
+					if (bVerbose) {
+						System.out.println(this + " >> SKIP: standpointLabel of EquivalentClassesAxiom could not be parsed.");
+					}
 					continue;
 				}
 			
 				try {
-					spOperatorHandler = getSPOperatorHandler(saxParser, ax, xmlString);
+					spOperatorHandler = getSPOperatorHandler(saxParser, xmlString);
 				} catch (Exception e) {
 					e.printStackTrace();
 					continue;
@@ -519,17 +456,13 @@ public class SPParser {
 				operatorPart = getOperatorPart(xmlString, spOperatorHandler.operator, axiomPart);
 				
 				spNames.addAll(spOperatorHandler.spNames);
-				spAxioms.add(operatorPart);
 					
 				axiomName = spOperatorHandler.spAxiomName;
 				if (axiomName != null) {
 					spAxiomNames.add(axiomName);	
-					try {
-						spAxiomNameMap.put(axiomName, operatorPart);
-					} catch (Exception e) {
-						System.out.println(this + " >> SKIP: Could not set value for " + axiomName + ":\n" + e.getMessage());
-						continue;
-					}
+					spAxiomNameMap.put(axiomName, operatorPart);
+				} else { // do not translate named standpoint axioms outside booleanCombinations
+					spAxioms.add(operatorPart);
 				}
 			} else { // normal EquivalentClassesAxiom without standpointLabel
 				standardAxioms.add(ax.getAxiomWithoutAnnotations());
@@ -539,18 +472,15 @@ public class SPParser {
 		AxiomType type;
 		for (OWLAxiom ax : aBoxAxioms) {
 			type = ax.getAxiomType();
-			if (supportedABoxAxiomTypes.contains(type)) {
+			if (Translator.supportedABoxAxiomTypes.contains(type)) {
 				standardAxioms.add(ax.getAxiomWithoutAnnotations());
-			} else {
+			} else if (bVerbose) {
 				System.out.println(this + " >> WARNING: Ontology contains axiom of a type (" + type + ") which will not be considered in the translation.");
 			}
 		}
 		
 		// remove universal standpoint (*) from set of standpoint names
 		spNames.remove("*");
-		
-		//System.out.print(this + " >> Axiom names: ");
-		//Renderer.printSet(spAxiomNames);
 	}
 	
 	public void parseAxioms() {
@@ -559,34 +489,6 @@ public class SPParser {
 		} else {
 			throw new IllegalArgumentException("Use method parseAxioms(OWLOntology) if parser has not been initialised with an OWLOntology.");
 		}
-	}
-	
-	public void getSPAxiomNames(Set<OWLAnnotation> annotations) {
-		// reset spAxiomNames
-		spAxiomNames = new HashSet<String>();
-		
-		String xmlString = null;
-		Set<String> names = new HashSet<String>();
-		for (OWLAnnotation annotation : annotations) {
-			xmlString = spAnnotationToXML(annotation);
-			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
-			xmlReader.setContentHandler(spOperatorHandler);
-			
-			try {
-				xmlReader.parse(new InputSource(new StringReader(xmlString)));
-			} catch (Exception e) {
-				e.printStackTrace();
-				continue;
-			}
-			
-			String axiomName = spOperatorHandler.spAxiomName;
-			if (axiomName != null) {
-				spAxiomNames.add(axiomName);
-			}
-		}
-		
-		//System.out.print(this + " >> Axiom names: ");
-		//Renderer.printSet(spAxiomNames);
 	}
 	
 	public String getFirstSPName(String spExpr) {
@@ -642,191 +544,17 @@ public class SPParser {
 		
 		return boolComb.substring(start, end).replace("\"", " ").trim();
 	}
-	
-	public void getSPNames(OWLOntology ontology) {
-		// reset spNames
-		spNames = new HashSet<String>();
-		
-		Set<OWLAnnotation> annotations = getAnnotations(ontology);
-		String xmlString = null;
-		Set<String> names = new HashSet<String>();
-		for (OWLAnnotation annotation : annotations) {
-			xmlString = spAnnotationToXML(annotation);
-			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
-			xmlReader.setContentHandler(spOperatorHandler);
-			
-			try {
-				xmlReader.parse(new InputSource(new StringReader(xmlString)));
-			} catch (Exception e) {
-				e.printStackTrace();
-				continue;
-			}
-			
-			names = spOperatorHandler.spNames;
-			names.remove("*");
-			Iterator<String> it = names.iterator();
-			it.forEachRemaining(next -> spNames.add(next));
-		}
-		
-		//System.out.print(this + " >> Standpoint names: ");
-		//Renderer.printSet(spNames);
-	}
-	
-	public void getSPNames() {
-		if (bInit) {
-			getSPNames(initOntology);
-		} else {
-			throw new IllegalArgumentException("Use method getSPNames(OWLOntology) if parser has not been initialised with an OWLOntology.");
-		}
-	}
-	
-	public void getSPNames(Set<OWLAnnotation> annotations) {
-		// reset spNames
-		spNames = new HashSet<String>();
-		
-		String xmlString = null;
-		Set<String> names = new HashSet<String>();
-		for (OWLAnnotation annotation : annotations) {
-			xmlString = spAnnotationToXML(annotation);
-			SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
-			xmlReader.setContentHandler(spOperatorHandler);
-			
-			try {
-				xmlReader.parse(new InputSource(new StringReader(xmlString)));
-			} catch (Exception e) {
-				e.printStackTrace();
-				continue;
-			}
-			
-			names = spOperatorHandler.spNames;
-			names.remove("*");
-			Iterator<String> it = names.iterator();
-			it.forEachRemaining(next -> spNames.add(next));
-		}
-		
-		//System.out.print(this + " >> Standpoint names: ");
-		//Renderer.printSet(spNames);
-	}
 
-	public Set<OWLEquivalentClassesAxiom> getAnnotatedEquivalentClassesAxioms() {
+	public boolean isStandpointLabel(OWLAnnotation annotation) {
 		if (bInit) {
-			Set<OWLEquivalentClassesAxiom> axiomSet = new HashSet<OWLEquivalentClassesAxiom>();
-						
-			Set<OWLAnnotation> annotations;
-			OWLEquivalentClassesAxiom axiom;
-			for (OWLEquivalentClassesAxiom a : initOntology.axioms(AxiomType.EQUIVALENT_CLASSES).toArray(OWLEquivalentClassesAxiom[]::new)) {
-				annotations = a.getAnnotations(initLabel);
-				if (!annotations.isEmpty()) {
-					if (annotations.size() > 1) {
-						System.out.println(this + " >> SKIP: Multiple standpointLabels for " + a + ".");
-						continue;
-					}
-					axiom = a.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
-					axiomSet.add(axiom);
-				}
-			}
-		
-			return axiomSet;
+			return isStandpointLabel(initOntology, annotation);
 		} else {
-			throw new IllegalArgumentException("Use method getAnnotatedEquivalentClassesAxioms(OWLOntology) if parser has not been initialised with an OWLOntology.");
+			throw new IllegalArgumentException("Use method isStandpointLabel(OWLOntology, OWLAnnotation) if parser has not been initialised with an OWLOntology.");
 		}
-	}
-	
-	public Set<OWLSubClassOfAxiom> getAnnotatedSubClassOfAxioms() {
-		if (bInit) {
-			Set<OWLSubClassOfAxiom> axiomSet = new HashSet<OWLSubClassOfAxiom>();
-						
-			Set<OWLAnnotation> annotations;
-			OWLSubClassOfAxiom axiom;
-			for (OWLSubClassOfAxiom a : initOntology.axioms(AxiomType.SUBCLASS_OF).toArray(OWLSubClassOfAxiom[]::new)) {
-				annotations = a.getAnnotations(initLabel);
-				if (!annotations.isEmpty()) {
-					if (annotations.size() > 1) {
-						System.out.println(this + " >> SKIP: Multiple standpointLabels for " + a + ".");
-						continue;
-					}
-					axiom = a.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
-					axiomSet.add(axiom);
-				}
-			}
-		
-			return axiomSet;
-		} else {
-			throw new IllegalArgumentException("Use method getAnnotatedSubClassOfAxioms(OWLOntology) if parser has not been initialised with an OWLOntology.");
-		}
-	}
-	
-	public Set<String> getBooleanCombinations() {		
-		Set<String> booleanCombinations = new HashSet<String>();
-		Set<OWLAnnotation> ontAnnotations = initOntology.getAnnotations();	// cannot give label as argument
-		for (OWLAnnotation annotation : ontAnnotations) {
-			if (isStandpointLabel(annotation)) {
-				booleanCombinations.add(spAnnotationToXML(annotation, false));
-			}
-		}
-		return booleanCombinations;
 	}
 
 
 	// PUBLIC STATIC METHODS //
-	
-	public static Set<OWLEquivalentClassesAxiom> getAnnotatedEquivalentClassesAxioms(OWLOntology ontology) {
-		String ontologyIRI = getOntologyIRIString(ontology);
-		if (ontologyIRI.equals(null)) {
-			return new HashSet<OWLEquivalentClassesAxiom>();
-		}
-		
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLDataFactory dataFactory = manager.getOWLDataFactory();
-		OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create(ontologyIRI + "#standpointLabel"));
-		
-		Set<OWLEquivalentClassesAxiom> axiomSet = new HashSet<OWLEquivalentClassesAxiom>();
-						
-		Set<OWLAnnotation> annotations;
-		OWLEquivalentClassesAxiom axiom;
-		for (OWLEquivalentClassesAxiom a : ontology.axioms(AxiomType.EQUIVALENT_CLASSES).toArray(OWLEquivalentClassesAxiom[]::new)) {
-			annotations = a.getAnnotations(label);
-			if (!annotations.isEmpty()) {
-				if (annotations.size() > 1) {
-					System.out.println("SPParser >> SKIP: Multiple standpointLabels for " + a + ".");
-					continue;
-				}
-				axiom = a.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
-				axiomSet.add(axiom);
-			}
-		}
-		
-		return axiomSet;
-	}
-	
-	public static Set<OWLSubClassOfAxiom> getAnnotatedSubClassOfAxioms(OWLOntology ontology) {
-		String ontologyIRI = getOntologyIRIString(ontology);
-		if (ontologyIRI.equals(null)) {
-			return new HashSet<OWLSubClassOfAxiom>();
-		}
-		
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLDataFactory dataFactory = manager.getOWLDataFactory();
-		OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create(ontologyIRI + "#standpointLabel"));
-		
-		Set<OWLSubClassOfAxiom> axiomSet = new HashSet<OWLSubClassOfAxiom>();
-						
-		Set<OWLAnnotation> annotations;
-		OWLSubClassOfAxiom axiom;
-		for (OWLSubClassOfAxiom a : ontology.axioms(AxiomType.SUBCLASS_OF).toArray(OWLSubClassOfAxiom[]::new)) {
-			annotations = a.getAnnotations(label);
-			if (!annotations.isEmpty()) {
-				if (annotations.size() > 1) {
-					System.out.println("SPParser >> SKIP: Multiple standpointLabels for " + a + ".");
-					continue;
-				}
-				axiom = a.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
-				axiomSet.add(axiom);
-			}
-		}
-		
-		return axiomSet;
-	}
 	
 	/**
 	 * @return the Set of all those OWLAnnotations in given ontology
@@ -875,10 +603,10 @@ public class SPParser {
 				}
 			}
 		} else {
-			System.out.println("SPParser >> ERROR: Standpoint labels on axiom type " + axiomType + " not supported.");
+			System.err.println("SPParser >> ERROR: Standpoint labels on axiom type " + axiomType + " not supported.");
 		}
 		
-		return annotationSet;	
+		return annotationSet;
 	}
 	
 	public static Set<OWLAnnotation> getAnnotations(OWLOntology ontology) {
@@ -892,30 +620,15 @@ public class SPParser {
 		return annotations;
 	}
 	
-	public static Set<String> getBooleanCombinations(OWLOntology ontology) throws IllegalArgumentException {
-		String ontologyIRI;
-		try {
-			ontologyIRI = getOntologyIRIString(ontology);
-		} catch (IllegalArgumentException e) {
-			throw e;
-		}
+	public static String[] getBooleanCombinations(OWLOntology ontology) throws IllegalArgumentException {
+		String ontologyIRI = getOntologyIRIString(ontology); // throws IllegalArgumentException
 		
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLDataFactory dataFactory = manager.getOWLDataFactory();
 		OWLAnnotationProperty label = dataFactory.getOWLAnnotationProperty(IRI.create(ontologyIRI + "#standpointLabel"));
 		String labelString = label.toString();
 		
-		Set<String> booleanCombinations = new HashSet<String>();
-		
-		Set<OWLAnnotation> ontAnnotations = ontology.getAnnotations();			// cannot give label as argument
-		for (OWLAnnotation annotation : ontAnnotations) {
-			// get only standpointLabel Annotations
-			if (annotation.getProperty().getIRI().toString().equals(labelString)) {
-				booleanCombinations.add(spAnnotationToXML(annotation));
-			}
-		}
-		
-		return booleanCombinations;
+		return ontology.annotations().filter(a -> (a.getProperty().compareTo(label) == 0)).map(a -> spAnnotationToXML(a, false)).toArray(String[]::new); // throws IllegalArgumentException
 	}
 	
 	/**
@@ -942,7 +655,7 @@ public class SPParser {
 	/**
 	 * @return an XML String to be parsed; returns empty String if annotation is empty or not a literal.
 	 */	
-	public static String spAnnotationToXML(OWLAnnotation spLabel, boolean bEncoding) {
+	public static String spAnnotationToXML(OWLAnnotation spLabel, boolean bEncoding) throws IllegalArgumentException {
 		String encoding = "";
 		if (bEncoding) {
 			encoding = "<?xml version=\"1.0\"?>\n";
@@ -955,15 +668,28 @@ public class SPParser {
 			spLabelString = encoding + value.asLiteral().get().getLiteral().toString();
 			return spLabelString;
 		} else {
-			System.out.println("SPParser >> ERROR: Value of " + spLabel + " is not a literal.");
-			return "";
+			throw new IllegalArgumentException("Value of " + spLabel + " is not a literal.");
 		}
 	}
 	
-	public static String spAnnotationToXML(OWLAnnotation spLabel) {
-		return spAnnotationToXML(spLabel, true);
+	public static String spAnnotationToXML(OWLAnnotation spLabel) throws IllegalArgumentException {
+		return spAnnotationToXML(spLabel, true); // throws IllegalArgumentException
 	}
 
+	/**
+	 * @return true if annotation acts along the standpointLabel annotation property
+	 * of given ontology.
+	 */
+	public static boolean isStandpointLabel(OWLOntology ontology, OWLAnnotation annotation) {
+		final String label = getOntologyIRIString(ontology) + "#standpointLabel";
+		String annotationLabel = annotation.getProperty().getIRI().toString();
+		return label.equals(annotationLabel);
+	}
+	
+	public static boolean isStandpointLabel(OWLOntology ontology, OWLAnnotationAssertionAxiom annotationAxiom) {
+		return isStandpointLabel(ontology, annotationAxiom.getAnnotation());
+	}
+	
 	
 	// PRIVATE METHODS //
 	
@@ -986,7 +712,7 @@ public class SPParser {
 			operatorEnd = xmlStringLower.indexOf("</diamond>");
 			offset = 11;
 		} else {
-			System.out.println("SPParser >> ERROR: The axiom has no modal operator.");
+			System.err.println("SPParser >> ERROR: The axiom has no modal operator.");
 			return "";
 		}
 		
@@ -998,44 +724,11 @@ public class SPParser {
 	/**
 	 * Helper method for parseAxioms.
 	 */
-	private static SPOperatorHandler getSPOperatorHandler(SAXParser saxParser, OWLAxiom axiom, String xmlString) throws Exception {
+	private static SPOperatorHandler getSPOperatorHandler(SAXParser saxParser, String xmlString) throws Exception {
 		SPOperatorHandler spOperatorHandler = new SPOperatorHandler();
-		try{
-			XMLReader xmlReader = saxParser.getXMLReader();
-			xmlReader.setContentHandler(spOperatorHandler);
-			xmlReader.parse(new InputSource(new StringReader(xmlString)));
-		} catch (Exception e) {
-			throw e;
-		}
+		XMLReader xmlReader = saxParser.getXMLReader();
+		xmlReader.setContentHandler(spOperatorHandler);
+		xmlReader.parse(new InputSource(new StringReader(xmlString)));
 		return spOperatorHandler;
-	}
-	
-	/**
-	 * @return true if annotation acts along the standpointLabel annotation property
-	 * of given ontology.
-	 */
-	private static boolean isStandpointLabel(OWLOntology ontology, OWLAnnotation annotation) {
-		final String label = getOntologyIRIString(ontology) + "#standpointLabel";
-		
-		String annotationLabel;
-		try {
-			annotationLabel = annotation.getProperty().getIRI().toString();
-		} catch (Exception e) {
-			return false;
-		}
-		
-		return label.equals(annotationLabel);
-	}
-	
-	private static boolean isStandpointLabel(OWLOntology ontology, OWLAnnotationAssertionAxiom annotationAxiom) {
-		return isStandpointLabel(ontology, annotationAxiom.getAnnotation());
-	}
-	
-	private boolean isStandpointLabel(OWLAnnotation annotation) {
-		if (bInit) {
-			return isStandpointLabel(initOntology, annotation);
-		} else {
-			throw new IllegalArgumentException("Use method isStandpointLabel(OWLOntology, OWLAnnotation) if parser has not been initialised with an OWLOntology.");
-		}
 	}
 }

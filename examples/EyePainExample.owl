@@ -1,0 +1,241 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#"
+     xml:base="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:EyePainExample="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#">
+    <owl:Ontology rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample">
+        <standpointLabel>&lt;booleanCombination&gt;
+  &lt;AND&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;IMDRF&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;EyePain&lt;/LHS&gt;
+        &lt;RHS&gt;Pain and Eye&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;IMDRF&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;Pain&lt;/LHS&gt;
+        &lt;RHS&gt;GeneralizedDisorders&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;NCIt&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;Eye&lt;/LHS&gt;
+        &lt;RHS&gt;OrganOfSpecialSense and (AnatomicStructureHasLocation some Orbit)&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;NCIt&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;OrganOfSpecialSense&lt;/LHS&gt;
+        &lt;RHS&gt;Organ and (AnatomicStructureIsPhysicalPartOf some Head)&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;NCIt&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;Organ&lt;/LHS&gt;
+        &lt;RHS&gt;AnatomicStructureSystemOrSubstance&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;NCIt&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;EyePain&lt;/LHS&gt;
+        &lt;RHS&gt;Pain&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;NCIt&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;Pain&lt;/LHS&gt;
+        &lt;RHS&gt;Symptom&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;NCIt&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;Symptom&lt;/LHS&gt;
+        &lt;RHS&gt;SignOrSymptom&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;NCIt&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;SignOrSymptom&lt;/LHS&gt;
+        &lt;RHS&gt;Finding&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;NCIt&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;Finding&lt;/LHS&gt;
+        &lt;RHS&gt;DiseaseDisorderOrFinding&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+    &lt;Box&gt;
+      &lt;Standpoint name=&quot;NCIt&quot;/&gt;
+      &lt;SubClassOf&gt;
+        &lt;LHS&gt;DiseaseDisorderOrFinding and AnatomicStructureSystemOrSubstance&lt;/LHS&gt;
+        &lt;RHS&gt;owl:Nothing&lt;/RHS&gt;
+      &lt;/SubClassOf&gt;
+    &lt;/Box&gt;
+  &lt;/AND&gt;
+&lt;/booleanCombination&gt;</standpointLabel>
+        <standpointLabel>&lt;booleanCombination&gt;
+  &lt;Box&gt;
+    &lt;Standpoint name=&quot;*&quot;/&gt;
+    &lt;SubClassOf&gt;
+      &lt;LHS&gt;EyePain&lt;/LHS&gt;
+      &lt;RHS&gt;Pain and Eye&lt;/RHS&gt;
+    &lt;/SubClassOf&gt;
+  &lt;/Box&gt;
+&lt;/booleanCombination&gt;</standpointLabel>
+        <rdfs:comment xml:lang="en">In IMDRF, the concept EyePain subsumes Eye and Pain, which is an obvious modelling error.
+In NCIt, the concepts Eye and Pain are disjoint.
+We added the axiom [*](EyePain sub (Eye and Pain)) in order to simulate a naive merge of IMDRF and NCIt.
+If we now query for [NCIt](EyePain sub owl:Nothing), we can see that EyePain is inconsistent under NCIt.
+Removing the additional axiom also removes the inconsistency under NCIt.</rdfs:comment>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#standpointLabel -->
+
+    <owl:AnnotationProperty rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#standpointLabel"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#AnatomicStructureHasLocation -->
+
+    <owl:ObjectProperty rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#AnatomicStructureHasLocation"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#AnatomicStructureIsPhysicalPartOf -->
+
+    <owl:ObjectProperty rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#AnatomicStructureIsPhysicalPartOf"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#AnatomicStructureSystemOrSubstance -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#AnatomicStructureSystemOrSubstance"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#DiseaseDisorderOrFinding -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#DiseaseDisorderOrFinding"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Eye -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Eye"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#EyePain -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#EyePain"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Finding -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Finding"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#GeneralizedDisorders -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#GeneralizedDisorders"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Head -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Head"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Orbit -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Orbit"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Organ -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Organ"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#OrganOfSpecialSense -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#OrganOfSpecialSense"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Pain -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Pain"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#SignOrSymptom -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#SignOrSymptom"/>
+    
+
+
+    <!-- http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Symptom -->
+
+    <owl:Class rdf:about="http://de.tu-dresden.inf.iccl.slowl/Examples/EyePainExample#Symptom"/>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+

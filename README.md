@@ -4,6 +4,7 @@
 Command-line tool allowing translation of OWL2 ontologies with standpoint annotations to standard OWL2.
 It can parse special annotation properties simulating the syntax of standpoint logic, and translates them to standard OWL2 syntax.
 A separate SROIQ reasoner (e.g. HermiT) can then be used on the translated ontology.
+For a more detailed description, see [_Automated Reasoning Support for Standpoint-OWL 2 (Emmrich, Álvarez and Strass)_](https://iccl.inf.tu-dresden.de/web/Inproceedings3365).
 
 ## Installation
 To build and install the app, JDK 9 or above (https://www.oracle.com/java/technologies/downloads/) and Apache Maven (https://maven.apache.org/index.html) are required.
